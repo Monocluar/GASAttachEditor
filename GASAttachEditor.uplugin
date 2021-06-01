@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "GASAttachEditor",
+	"Description": "用于查看角色中携带的GA",
+	"Category": "Gameplay",
+	"CreatedBy": "Monocluar",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"EngineVersion": "4.26.0",
+	"CanContainContent": false,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "GASAttachEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
