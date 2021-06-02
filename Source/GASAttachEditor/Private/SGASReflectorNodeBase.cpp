@@ -8,9 +8,15 @@
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 
+EGAAbilitieNode FGASAbilitieNodeBase::GetNodeType() const
+{
+	return GAAbilitieNode;
+}
+
 FGASAbilitieNodeBase::FGASAbilitieNodeBase()
 	:Tint(FLinearColor(1.f,1.f,1.f,0.5f))
 	,bIsShow(true)
+	,GAAbilitieNode(EGAAbilitieNode::Node_Abilitie)
 {
 
 }
@@ -88,19 +94,6 @@ TSharedRef<SWidget> SGASAbilitieTreeItem::GenerateWidgetForColumn(const FName& C
 	{
 		if (GAAbilitieNode == Node_Abilitie)
 		{
-			return SNew(SBorder)
-				.HAlign(HAlign_Left)
-				.VAlign(VAlign_Center)
-				//.Padding(FMargin(2.0f, 0.0f))
-				.ColorAndOpacity(this, &SGASAbilitieTreeItem::GetTint)
-				[
-					SNew(SHyperlink)
-					.Text(this, &SGASAbilitieTreeItem::GetReadableLocationAsText)
-					.OnNavigate(this, &SGASAbilitieTreeItem::HandleHyperlinkNavigate)
-				];
-		}
-		else
-		{
 			return SNew(SHorizontalBox)
 
 				+ SHorizontalBox::Slot()
@@ -111,23 +104,54 @@ TSharedRef<SWidget> SGASAbilitieTreeItem::GenerateWidgetForColumn(const FName& C
 					.ShouldDrawWires(true)
 				]
 
-			+ SHorizontalBox::Slot()
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(2.0f, 0.0f)
+				.VAlign(VAlign_Center)
+				[
+					SNew(SBorder)
+					.HAlign(HAlign_Left)
+					.VAlign(VAlign_Center)
+					//.Padding(FMargin(2.0f, 0.0f))
+					.Visibility(EVisibility::SelfHitTestInvisible)
+					.BorderBackgroundColor(FSlateColor(FLinearColor(1.f,1.f,1.f,0.f)))
+					.ColorAndOpacity(this, &SGASAbilitieTreeItem::GetTint)
+					[
+						SNew(SHyperlink)
+						.Text(this, &SGASAbilitieTreeItem::GetReadableLocationAsText)
+						.OnNavigate(this, &SGASAbilitieTreeItem::HandleHyperlinkNavigate)
+					]
+				] ;
+		}
+		else
+		{
+			return SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SExpanderArrow, SharedThis(this))
+					.IndentAmount(16)
+					.ShouldDrawWires(true)
+				]
+
+				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				.Padding(2.0f, 0.0f)
 				.VAlign(VAlign_Center)
 				[
 					SNew(STextBlock)
 					.Text(this, &SGASAbilitieTreeItem::GetReadableLocationAsText)
-					.ColorAndOpacity(this, &SGASAbilitieTreeItem::GetFontColor)
 				];
 		}
 	}
 	else if (NAME_GAStateType == ColumnName)
 	{
 		return SNew(SBorder)
-			.HAlign(HAlign_Center)
+			.HAlign(HAlign_Left)
 			.VAlign(VAlign_Center)
 			.Padding(FMargin(2.0f, 0.0f))
+			.Visibility(EVisibility::SelfHitTestInvisible)
+			.BorderBackgroundColor(FSlateColor(FLinearColor(1.f, 1.f, 1.f, 0.f)))
 			.ColorAndOpacity(this, &SGASAbilitieTreeItem::GetTint)
 			[
 				SNew(STextBlock)
@@ -141,6 +165,8 @@ TSharedRef<SWidget> SGASAbilitieTreeItem::GenerateWidgetForColumn(const FName& C
 			.HAlign(HAlign_Center)
 			.VAlign(VAlign_Center)
 			.Padding(FMargin(2.0f, 0.0f))
+			.Visibility(EVisibility::SelfHitTestInvisible)
+			.BorderBackgroundColor(FSlateColor(FLinearColor(1.f, 1.f, 1.f, 0.f)))
 			.ColorAndOpacity(this, &SGASAbilitieTreeItem::GetTint)
 			[
 				SNew(STextBlock)
@@ -187,6 +213,11 @@ TSharedRef<FGASAbilitieNode> FGASAbilitieNode::Create(TWeakObjectPtr<UAbilitySys
 	return MakeShareable(new FGASAbilitieNode(InASComponent, InAbilitySpecPtr));
 }
 
+TSharedRef<FGASAbilitieNode> FGASAbilitieNode::Create(TWeakObjectPtr<UAbilitySystemComponent> InASComponent, FGameplayAbilitySpec InAbilitySpecPtr, TWeakObjectPtr<UGameplayTask> InGameplayTask)
+{
+	return MakeShareable(new FGASAbilitieNode(InASComponent,InAbilitySpecPtr, InGameplayTask));
+}
+
 FName FGASAbilitieNode::GetGAName() const
 {
 	if (!ASComponent.IsValid())
@@ -194,12 +225,28 @@ FName FGASAbilitieNode::GetGAName() const
 		return FName();
 	}
 
-	return *ASComponent->CleanupName(GetNameSafe(AbilitySpecPtr.Ability));
+	switch (GAAbilitieNode)
+	{
+	case Node_Abilitie:
+		return *ASComponent->CleanupName(GetNameSafe(AbilitySpecPtr.Ability));
+		break;
+	case Node_Task:
+		return GameplayTask.IsValid() ? *GameplayTask->GetDebugString() : FName();
+		break;
+	case Node_Message:
+		break;
+	}
+	return FName();
 }
 
 FText FGASAbilitieNode::GetGAStateType()
 {
 	FText OutType;
+	if (GAAbilitieNode != Node_Abilitie)
+	{
+		return OutType;
+	}
+
 	ScreenGAMode = NoActive;
 	FGameplayTagContainer FailureTags;
 	if (!ASComponent.IsValid())
@@ -251,11 +298,6 @@ bool FGASAbilitieNode::GetGAIsActive() const
 	return AbilitySpecPtr.IsActive();
 }
 
-EGAAbilitieNode FGASAbilitieNode::GetNodeType() const
-{
-	return Node_Abilitie;
-}
-
 FText FGASAbilitieNode::GetAbilitieHasTag() const
 {
 	return FText();
@@ -263,7 +305,7 @@ FText FGASAbilitieNode::GetAbilitieHasTag() const
 
 FString FGASAbilitieNode::GetWidgetFile() const
 {
-	if (!ASComponent.IsValid())
+	if (!ASComponent.IsValid() || GAAbilitieNode != Node_Abilitie)
 	{
 		return FString();
 	}
@@ -283,23 +325,19 @@ int32 FGASAbilitieNode::GetWidgetLineNumber() const
 
 bool FGASAbilitieNode::HasValidWidgetAssetData() const
 {
-	return true;
+	return GAAbilitieNode == Node_Abilitie;
 }
 
 FString FGASAbilitieNode::GetWidgetAssetData() const
 {
+	if (GAAbilitieNode != Node_Abilitie)
+	{
+		return FString();
+	}
+
 	if (UGameplayAbility* Ability = AbilitySpecPtr.Ability)
 	{
 
-		/*if (Ability->IsAsset())
-		{
-			return FAssetData(Ability, true);
-		}
-		else
-		{
-			FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-			return AssetRegistryModule.Get().GetAssetByObjectPath(*Ability->GetPathName());
-		}*/
 		if (Ability->IsAsset())
 		{
 			Ability->GetPathName();
@@ -322,7 +360,49 @@ FGASAbilitieNode::FGASAbilitieNode(TWeakObjectPtr<UAbilitySystemComponent> InASC
 {
 	AbilitySpecPtr = InAbilitySpecPtr;
 	ASComponent = InASComponent;
+
+	GAAbilitieNode = Node_Abilitie;
+
 	GetGAStateType();
+
+	CreateChild();
+}
+
+FGASAbilitieNode::FGASAbilitieNode(TWeakObjectPtr<UAbilitySystemComponent> InASComponent,  FGameplayAbilitySpec InAbilitySpecPtr, TWeakObjectPtr<UGameplayTask> InGameplayTask)
+{
+	ASComponent = InASComponent;
+	AbilitySpecPtr = InAbilitySpecPtr;
+	GameplayTask = InGameplayTask;
+
+	GAAbilitieNode = Node_Task;
+}
+
+void FGASAbilitieNode::CreateChild()
+{
+	if (!ASComponent.IsValid()) return;
+
+	if (!AbilitySpecPtr.IsActive()) return;
+
+	TArray<UGameplayAbility*> Instances = AbilitySpecPtr.GetAbilityInstances();
+
+	for (UGameplayAbility* Instance : Instances)
+	{
+		if (!Instance) continue;
+
+		// 因为Instance->Instance在protected里面，也没有其Get方法，好在他是UPROPERTY带UE4反射的结构体
+
+		UArrayProperty* ActiveTasksPtr = FindField<UArrayProperty>(Instance->GetClass(),"ActiveTasks");
+
+		if (!ActiveTasksPtr) continue;
+
+		TArray<UGameplayTask*> ActiveTasks = *ActiveTasksPtr->ContainerPtrToValuePtr<TArray<UGameplayTask*>>(Instance);
+
+		for (UGameplayTask*& Item : ActiveTasks)
+		{
+			AddChildNode(FGASAbilitieNode::Create(ASComponent, AbilitySpecPtr , Item));
+		}
+
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -143,6 +143,19 @@ public:
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 
 protected:
+	// 当前筛选世界场景
+	TSharedRef<SWidget>	OnGetShowWorldTypeMenu();
+
+	// 选中世界场景
+	void HandleShowWorldTypeChange(FWorldContext InWorldContext);
+
+private:
+	// 当期选择的世界场景句柄
+	FName SelectWorldSceneConetextHandle;
+
+	FText SelectWorldSceneText;
+
+protected:
 
 	FText GenerateToolTipForText(TSharedRef<FGASAbilitieNodeBase> InReflectorNode) const;
 
@@ -189,6 +202,7 @@ protected:
 	FText HandleGetPickingModeText() const;
 
 
+
 private:
 
 	void SaveSettings();
@@ -198,9 +212,33 @@ private:
 	void UpdateGameplayCueListItems();
 	FReply UpdateGameplayCueListItemsButtom();
 
+	// 创建查看Categories类型的筛选框
+	TSharedRef<SWidget> OnGetShowDebugAbilitieCategories();
+
+	// 当前选择的Categories类型
+	FText GetShowDebugAbilitieCategoriesDropDownText() const;
+
+	// 选中查看的Categories类型
+	void HandleShowDebugAbilitieCategories(EDebugAbilitieCategories InType);
+
+	FORCEINLINE FName GetAbilitieCategoriesName(EDebugAbilitieCategories InType) const;
+
+	FORCEINLINE FText GetAbilitieCategoriesText(EDebugAbilitieCategories InType) const;
+
+	// 创建Categories查看控件
+	void CreateDebugAbilitieCategories(EDebugAbilitieCategories InType);
+
+private:
+	// Categories查看Tool的Slot控件
+	TSharedPtr<SOverlay> CategoriesToolSlot;
+
+private:
+	// 当前选择Categories类型
+	EDebugAbilitieCategories SelectAbilitieCategories;
+
 protected: 
 	
-	inline UWorld* GetWorld() const;
+	FORCEINLINE UWorld* GetWorld();
 
 protected:
 
@@ -233,6 +271,10 @@ protected:
 
 	// 设置筛选名称
 	FText HandleGeScreenModeText(EScreenGAModeState InState) const;
+
+	// 创建Ability查看控件
+	TSharedPtr<SWidget> CreateAbilityToolWidget();
+
 
 private:
 
@@ -267,16 +309,12 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 {
 	bPickingTick = false;
 
+	SelectAbilitieCategories = Ability;
+
 	ScreenModeState = EScreenGAModeState::Active | EScreenGAModeState::Blocked | EScreenGAModeState::NoActive;
 
 	LoadSettings();
 
-	TArray<FName> HiddenColumnsList;
-	HiddenColumnsList.Reserve(HiddenReflectorTreeColumns.Num());
-	for (const FString& Item : HiddenReflectorTreeColumns)
-	{
-		HiddenColumnsList.Add(*Item);
-	}
 
 	ChildSlot
 		[
@@ -284,12 +322,35 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 
 			+ SVerticalBox::Slot()
 			.AutoHeight()
-			.HAlign(HAlign_Left)
+			//.HAlign(HAlign_Left)
 			[
-				SNew(SButton)
-				.HAlign(HAlign_Left)
-				.Text(LOCTEXT("Refresh","刷新所有人物"))
-				.OnClicked(this, &SGASAttachEditorImpl::UpdateGameplayCueListItemsButtom)
+				SNew(SHorizontalBox)
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SButton)
+					.HAlign(HAlign_Left)
+					.Text(LOCTEXT("Refresh", "刷新查看"))
+					.OnClicked(this, &SGASAttachEditorImpl::UpdateGameplayCueListItemsButtom)
+				]
+				
+				+ SHorizontalBox::Slot() 
+				.FillWidth(1.f)
+				.HAlign(HAlign_Right)
+				[
+					SNew(SComboButton)
+					.OnGetMenuContent(this, &SGASAttachEditorImpl::OnGetShowWorldTypeMenu)
+					.VAlign(VAlign_Center)
+					.ContentPadding(2)
+					.ButtonContent()
+					[
+						SNew(STextBlock)
+						.ToolTipText(LOCTEXT("ShowWorldTypeType", "选择需要查看场景"))
+						.Text_Lambda([this]() -> FText { return SelectWorldSceneText; })
+					]
+				]
+
 			]
 
 			+ SVerticalBox::Slot()
@@ -395,66 +456,30 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 			.AutoHeight()
 			.HAlign(HAlign_Left)
 			[
-				SNew(SHorizontalBox)
-
-				+SHorizontalBox::Slot()
+				SNew(SComboButton)
+				.OnGetMenuContent(this, &SGASAttachEditorImpl::OnGetShowDebugAbilitieCategories)
+				.VAlign(VAlign_Center)
+				.ContentPadding(2)
+				.ButtonContent()
 				[
-					CreateScreenCheckBox(Active).ToSharedRef()
-				]
-
-				+ SHorizontalBox::Slot()
-				[
-					CreateScreenCheckBox(Blocked).ToSharedRef()
-				]
-
-				+ SHorizontalBox::Slot()
-				[
-					CreateScreenCheckBox(NoActive).ToSharedRef()
+					SNew(STextBlock)
+					.ToolTipText(LOCTEXT("ShowCharactAbilitieType", "选择需要查看角色身上的效果类型"))
+					.Text(this, &SGASAttachEditorImpl::GetShowDebugAbilitieCategoriesDropDownText)
 				]
 			]
 
 			+ SVerticalBox::Slot()
 			.FillHeight(1.f)
 			[
-				SNew(SBorder)
-				.Padding(0)
-				[
-					SAssignNew(ReflectorTree,SAbilitieTree)
-					.ItemHeight(24.f)
-					.TreeItemsSource(&FilteredTreeRoot)
-					.OnGenerateRow(this, &SGASAttachEditorImpl::OnGenerateWidgetForFilterListView )
-					.OnGetChildren(this, &SGASAttachEditorImpl::HandleReflectorTreeGetChildren )
-					.OnSelectionChanged(this, &SGASAttachEditorImpl::HandleReflectorTreeSelectionChanged)
-					.OnContextMenuOpening(this, &SGASAttachEditorImpl::HandleReflectorTreeContextMenuPtr)
-					.HighlightParentNodesForSelection(true)
-					.HeaderRow
-					(
-						SNew(SHeaderRow)
-						.CanSelectGeneratedColumn(true)
-						.HiddenColumnsList(HiddenColumnsList)
-						.OnHiddenColumnsListChanged(this, &SGASAttachEditorImpl::HandleReflectorTreeHiddenColumnsListChanged)
-
-						+SHeaderRow::Column(NAME_AbilitietName)
-						.DefaultLabel(LOCTEXT("AbilitietName", "名称"))
-						.DefaultTooltip(LOCTEXT("AbilitietNameToolTip", "技能名称/任务名称/调试名称"))
-						.FillWidth(0.7f)
-						.ShouldGenerateWidget(true)
-
-						+ SHeaderRow::Column(NAME_GAStateType)
-						.DefaultLabel(LOCTEXT("GAStateType", "当前状态"))
-						.DefaultTooltip(LOCTEXT("GAStateTypeToolTip", "当前状态是否激活，或者是可以被激活但是因为某些原因被拦截"))
-						.FillWidth(0.3f)
-
-						+ SHeaderRow::Column(NAME_GAIsActive)
-						.DefaultLabel(LOCTEXT("GAIsActive", "是否激活"))
-						.FixedWidth(80.0f)
-					)
-				]
+				//CreateAbilityToolWidget()
+				SAssignNew(CategoriesToolSlot,SOverlay)
 			]
+
 		];
 
-	UpDataPlayerComp(GetWorld());
-	UpdateGameplayCueListItems();
+	HandleShowDebugAbilitieCategories(Ability);
+
+	UpdateGameplayCueListItemsButtom();
 
 	FSlateApplication::Get().OnApplicationPreInputKeyDownListener().AddRaw(this, &SGASAttachEditorImpl::OnApplicationPreInputKeyDownListener);
 
@@ -467,6 +492,53 @@ void SGASAttachEditorImpl::Tick(const FGeometry& AllottedGeometry, const double 
 	{
 		UpdateGameplayCueListItems();
 	}
+}
+
+TSharedRef<SWidget> SGASAttachEditorImpl::OnGetShowWorldTypeMenu()
+{
+	FMenuBuilder MenuBuilder( true, NULL );
+
+	const TIndirectArray<FWorldContext>& WorldList = GEngine->GetWorldContexts();
+
+	for (auto& Item : WorldList)
+	{
+		if (Item.WorldType == EWorldType::Type::PIE)
+		{
+			FUIAction NoAction( FExecuteAction::CreateSP( this, &SGASAttachEditorImpl::HandleShowWorldTypeChange, Item ) );
+
+			FText ShowName;
+			if (Item.RunAsDedicated)
+			{
+				ShowName = LOCTEXT("Dedicated","专用服务器");
+			}
+			else
+			{
+				ShowName = FText::Format(FText::FromString("{0}  [{1}]"), LOCTEXT("Client","客户端") ,FText::AsNumber(Item.PIEInstance));
+			}
+
+			MenuBuilder.AddMenuEntry(ShowName, FText(), FSlateIcon(), NoAction);
+		}
+	}
+
+	return MenuBuilder.MakeWidget();
+}
+
+
+void SGASAttachEditorImpl::HandleShowWorldTypeChange(FWorldContext InWorldContext)
+{
+	SelectWorldSceneConetextHandle = InWorldContext.ContextHandle;
+
+
+	if (InWorldContext.RunAsDedicated)
+	{
+		SelectWorldSceneText = LOCTEXT("Dedicated", "专用服务器");
+	}
+	else
+	{
+		SelectWorldSceneText = FText::Format(FText::FromString("{0}  [{1}]"), LOCTEXT("Client", "客户端"), FText::AsNumber(InWorldContext.PIEInstance));
+	}
+
+	UpdateGameplayCueListItemsButtom();
 }
 
 FText SGASAttachEditorImpl::GenerateToolTipForText(TSharedRef<FGASAbilitieNodeBase> InReflectorNode) const
@@ -689,35 +761,145 @@ FReply SGASAttachEditorImpl::UpdateGameplayCueListItemsButtom()
 	return FReply::Handled();
 }
 
-UWorld* SGASAttachEditorImpl::GetWorld() const
+TSharedRef<SWidget> SGASAttachEditorImpl::OnGetShowDebugAbilitieCategories()
 {
-	if (SelectAbilitySystemComponent.IsValid())
+	FMenuBuilder MenuBuilder(true, NULL);
+
+	TArray<EDebugAbilitieCategories> Categories({ EDebugAbilitieCategories::Ability,EDebugAbilitieCategories::Attributes,EDebugAbilitieCategories::GameplayEffects });
+
+	for (EDebugAbilitieCategories& Type : Categories)
 	{
-		if (UWorld* World = SelectAbilitySystemComponent->GetWorld())
-		{
-			return World;
-		}
+
+		FUIAction NoAction(FExecuteAction::CreateSP(this, &SGASAttachEditorImpl::HandleShowDebugAbilitieCategories, Type));
+		MenuBuilder.AddMenuEntry(FText::FromName(GetAbilitieCategoriesName(Type)), GetAbilitieCategoriesText(Type), FSlateIcon(), NoAction);
 	}
+
+
+	return MenuBuilder.MakeWidget();
+}
+
+FText SGASAttachEditorImpl::GetShowDebugAbilitieCategoriesDropDownText() const
+{
+	return FText::FromName(GetAbilitieCategoriesName(SelectAbilitieCategories));
+}
+
+void SGASAttachEditorImpl::HandleShowDebugAbilitieCategories(EDebugAbilitieCategories InType)
+{
+	SelectAbilitieCategories = InType;
+
+	// 刷新查看东东
+	CreateDebugAbilitieCategories(InType);
+}
+
+FORCEINLINE FName SGASAttachEditorImpl::GetAbilitieCategoriesName(EDebugAbilitieCategories InType) const
+{
+	FName TypeName;
+	switch (InType)
+	{
+	case EDebugAbilitieCategories::Ability:
+		TypeName = "Ability";
+		break;
+	case EDebugAbilitieCategories::Attributes:
+		TypeName = "Attributes";
+		break;
+	case EDebugAbilitieCategories::GameplayEffects:
+		TypeName = "GameplayEffects";
+		break;
+	}
+
+	return TypeName;
+}
+
+FORCEINLINE FText SGASAttachEditorImpl::GetAbilitieCategoriesText(EDebugAbilitieCategories InType) const
+{
+	FText TypeText;
+	switch (InType)
+	{
+	case EDebugAbilitieCategories::Ability:
+		TypeText = LOCTEXT("Categories_Ability", "技能");
+		break;
+	case EDebugAbilitieCategories::Attributes:
+		TypeText = LOCTEXT("Categories_Attributes", "属性");
+		break;
+	case EDebugAbilitieCategories::GameplayEffects:
+		TypeText = LOCTEXT("Categories_GameplayEffects", "效果");
+		break;
+	}
+
+	return TypeText;
+}
+
+void SGASAttachEditorImpl::CreateDebugAbilitieCategories(EDebugAbilitieCategories InType)
+{
+	if (!CategoriesToolSlot.IsValid())
+	{
+		return;
+	}
+
+	CategoriesToolSlot->ClearChildren();
+
+	TSharedPtr<SWidget> CategoriesWidget;
+
+	switch (InType)
+	{
+	case EDebugAbilitieCategories::Attributes:
+		break;
+	case EDebugAbilitieCategories::GameplayEffects:
+		break;
+	case EDebugAbilitieCategories::Ability:
+		CategoriesWidget = CreateAbilityToolWidget();
+		break;
+	}
+
+	if (!CategoriesWidget.IsValid())
+	{
+		return;
+	}
+	
+	CategoriesToolSlot->AddSlot()
+		[
+			CategoriesWidget.ToSharedRef()
+		];
+}
+
+UWorld* SGASAttachEditorImpl::GetWorld()
+{
 
 	UWorld* World = nullptr;
 
 	const TIndirectArray<FWorldContext>& WorldList = GEngine->GetWorldContexts();
 
-	for (int i = 0; i < WorldList.Num(); i++)
+	TArray<FWorldContext> NewWorldList;
+
+	for (auto& Item : WorldList)
 	{
-		if (WorldList[i].WorldType == EWorldType::Type::PIE)
+		if (Item.WorldType == EWorldType::Type::PIE )
 		{
-			World = WorldList[i].World();
-			break;
+			NewWorldList.Add(Item);
+			if (Item.ContextHandle == SelectWorldSceneConetextHandle)
+			{
+				return Item.World();
+			}
 		}
 	}
 
-	if (!World)
+	if (NewWorldList.Num())
 	{
-		return nullptr;
+		SelectWorldSceneConetextHandle = NewWorldList[0].ContextHandle;
+
+		if (NewWorldList[0].RunAsDedicated)
+		{
+			SelectWorldSceneText = LOCTEXT("Dedicated", "专用服务器");
+		}
+		else
+		{
+			SelectWorldSceneText = FText::Format(FText::FromString("{0}  [{1}]"), LOCTEXT("Client", "客户端"), FText::AsNumber(NewWorldList[0].PIEInstance));
+		}
+
+		return NewWorldList[0].World();
 	}
 
-	return World;
+	return nullptr;
 
 }
 
@@ -807,6 +989,84 @@ FText SGASAttachEditorImpl::HandleGeScreenModeText(EScreenGAModeState InState) c
 	}
 
 	return StateText;
+}
+
+TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityToolWidget()
+{
+
+	TArray<FName> HiddenColumnsList;
+	HiddenColumnsList.Reserve(HiddenReflectorTreeColumns.Num());
+	for (const FString& Item : HiddenReflectorTreeColumns)
+	{
+		HiddenColumnsList.Add(*Item);
+	}
+
+	TSharedPtr<SVerticalBox> Widget = 
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.Padding(2.f, 2.f)
+			.AutoHeight()
+			.HAlign(HAlign_Left)
+			[
+				SNew(SHorizontalBox)
+
+				+ SHorizontalBox::Slot()
+				[
+					CreateScreenCheckBox(Active).ToSharedRef()
+				]
+
+				+ SHorizontalBox::Slot()
+				[
+					CreateScreenCheckBox(Blocked).ToSharedRef()
+				]
+
+				+ SHorizontalBox::Slot()
+				[
+					CreateScreenCheckBox(NoActive).ToSharedRef()
+				]
+			]
+
+		+ SVerticalBox::Slot()
+		.FillHeight(1.f)
+		[
+			SNew(SBorder)
+			.Padding(0)
+			[
+				SAssignNew(ReflectorTree, SAbilitieTree)
+				.ItemHeight(24.f)
+				.TreeItemsSource(&FilteredTreeRoot)
+				.OnGenerateRow(this, &SGASAttachEditorImpl::OnGenerateWidgetForFilterListView)
+				.OnGetChildren(this, &SGASAttachEditorImpl::HandleReflectorTreeGetChildren)
+				.OnSelectionChanged(this, &SGASAttachEditorImpl::HandleReflectorTreeSelectionChanged)
+				.OnContextMenuOpening(this, &SGASAttachEditorImpl::HandleReflectorTreeContextMenuPtr)
+				.HighlightParentNodesForSelection(true)
+				.HeaderRow
+				(
+					SNew(SHeaderRow)
+					.CanSelectGeneratedColumn(true)
+					.HiddenColumnsList(HiddenColumnsList)
+					.OnHiddenColumnsListChanged(this, &SGASAttachEditorImpl::HandleReflectorTreeHiddenColumnsListChanged)
+
+					+ SHeaderRow::Column(NAME_AbilitietName)
+					.DefaultLabel(LOCTEXT("AbilitietName", "名称"))
+					.DefaultTooltip(LOCTEXT("AbilitietNameToolTip", "技能名称/任务名称/调试名称"))
+					.FillWidth(0.7f)
+					.ShouldGenerateWidget(true)
+
+					+ SHeaderRow::Column(NAME_GAStateType)
+					.DefaultLabel(LOCTEXT("GAStateType", "当前状态"))
+					.DefaultTooltip(LOCTEXT("GAStateTypeToolTip", "当前状态是否激活，或者是可以被激活但是因为某些原因被拦截"))
+					.FillWidth(0.3f)
+
+					+ SHeaderRow::Column(NAME_GAIsActive)
+					.DefaultLabel(LOCTEXT("GAIsActive", "是否激活"))
+					.FixedWidth(80.0f)
+				)
+			]
+		];
+
+
+	return Widget;
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -48,7 +48,7 @@ public:
 	virtual bool GetGAIsActive() const = 0;
 
 	// 该类型是什么类型东东
-	virtual EGAAbilitieNode GetNodeType() const = 0;
+	virtual EGAAbilitieNode GetNodeType() const;
 
 	// 当前技能含有的Tag
 	virtual FText GetAbilitieHasTag() const { return FText(); }
@@ -91,7 +91,7 @@ public:
 	void SetItemVisility(bool bShow);
 
 	// 获取显隠性
-	inline bool IsShow() const;
+	FORCEINLINE bool IsShow() const;
 
 
 protected:
@@ -108,9 +108,13 @@ protected:
 	// 显隠性
 	bool bIsShow;
 
+	// 该类型是什么类型东东
+	EGAAbilitieNode GAAbilitieNode;
 
 public:
 	EScreenGAModeState ScreenGAMode;
+
+
 
 };
 
@@ -142,6 +146,7 @@ protected:
 protected:
 
 	void HanldeTreeItemVis(bool IsShow);
+
 
 protected:
 
@@ -203,6 +208,8 @@ public:
 
 	static TSharedRef<FGASAbilitieNode> Create(TWeakObjectPtr<UAbilitySystemComponent> InASComponent, FGameplayAbilitySpec InAbilitySpecPtr);
 
+	static TSharedRef<FGASAbilitieNode> Create(TWeakObjectPtr<UAbilitySystemComponent> InASComponent,  FGameplayAbilitySpec InAbilitySpecPtr, TWeakObjectPtr<UGameplayTask> InGameplayTask);
+
 public:
 	virtual FName GetGAName() const override;
 
@@ -211,9 +218,6 @@ public:
 
 
 	virtual bool GetGAIsActive() const override;
-
-
-	virtual EGAAbilitieNode GetNodeType() const override;
 
 
 	virtual FText GetAbilitieHasTag() const override;
@@ -236,9 +240,18 @@ private:
 	 */
 	explicit FGASAbilitieNode(TWeakObjectPtr<UAbilitySystemComponent> InASComponent,  FGameplayAbilitySpec InAbilitySpecPtr);
 
+
+	explicit FGASAbilitieNode(TWeakObjectPtr<UAbilitySystemComponent> InASComponent, FGameplayAbilitySpec InAbilitySpecPtr, TWeakObjectPtr<UGameplayTask> InGameplayTask);
+
+protected:
+
+	void CreateChild();
+
 private:
 
 	FGameplayAbilitySpec AbilitySpecPtr;
 
 	TWeakObjectPtr<UAbilitySystemComponent> ASComponent;
+
+	TWeakObjectPtr<UGameplayTask> GameplayTask;
 };

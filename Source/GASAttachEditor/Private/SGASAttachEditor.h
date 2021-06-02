@@ -5,6 +5,19 @@
 #include "Widgets/SUserWidget.h"
 
 
+enum EDebugAbilitieCategories
+{
+	// 数据
+	Attributes,
+
+	// 效果
+	GameplayEffects,
+
+	// 技能
+	Ability,
+};
+
+
 class SGASAttachEditor : public SUserWidget
 {
 public:
