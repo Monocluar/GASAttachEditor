@@ -7,6 +7,7 @@
 #include "../Public/GASAttachEditorStyle.h"
 #include "Widgets/Views/STreeView.h"
 #include "SGASCharacterTagsBase.h"
+#include "SGASAttributesNodeBase.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 
@@ -134,8 +135,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info,const UAbility
 class SGASAttachEditorImpl : public SGASAttachEditor
 {
 	typedef STreeView<TSharedRef<FGASAbilitieNodeBase>> SAbilitieTree;
-
-	//typedef STreeView<TSharedRef<FGASCharacterTagsBase>> SCharacterTagsTree;
+	typedef STreeView<TSharedRef<FGASAttributesNodeBase>> SAttributesTree;
 
 public:
 	virtual void Construct(const FArguments& InArgs) override;
@@ -177,6 +177,12 @@ protected:
 
 	/** 反射树头列表更改时的回调. */
 	void HandleReflectorTreeHiddenColumnsListChanged();
+
+protected:
+	/** 树视图生成树的回调 */
+	TSharedRef<ITableRow> HandleAttributesWidgetForFilterListView(TSharedRef< FGASAttributesNodeBase > InItem, const TSharedRef<STableViewBase>& OwnerTable);
+
+	void HandleAttributesTreeGetChildren( TSharedRef<FGASAttributesNodeBase> InReflectorNode, TArray<TSharedRef<FGASAttributesNodeBase>>& OutChildren );
 
 protected:
 	// 当前筛选的角色
@@ -275,6 +281,11 @@ protected:
 	// 创建Ability查看控件
 	TSharedPtr<SWidget> CreateAbilityToolWidget();
 
+protected:
+
+	// 创建Attributes查看控件
+	TSharedPtr<SWidget> CreateAttributesToolWidget();
+
 
 private:
 
@@ -282,14 +293,15 @@ private:
 	uint8 ScreenModeState;
 
 private:
-	TSharedPtr<SAbilitieTree> ReflectorTree;
+	TSharedPtr<SAbilitieTree> AbilitieReflectorTree;
+
 	TArray<FString> HiddenReflectorTreeColumns;
 
 	// 选择的控件
 	TArray<TSharedRef<FGASAbilitieNodeBase>> SelectedNodes;
 
 	// 根部的部件组
-	TArray<TSharedRef<FGASAbilitieNodeBase>> FilteredTreeRoot;
+	TArray<TSharedRef<FGASAbilitieNodeBase>> AbilitieFilteredTreeRoot;
 
 	// 选中的角色的GA
 	TWeakObjectPtr<UAbilitySystemComponent> SelectAbilitySystemComponent;
@@ -297,6 +309,12 @@ private:
 
 	bool bPickingTick;
 
+private:
+
+	TSharedPtr<SAttributesTree> AttributesReflectorTree;
+
+	// 根部的部件组
+	TArray<TSharedRef<FGASAttributesNodeBase>> AttributesFilteredTreeRoot;
 
 };
 
@@ -561,7 +579,7 @@ void SGASAttachEditorImpl::HandleReflectorTreeGetChildren(TSharedRef<FGASAbiliti
 
 void SGASAttachEditorImpl::HandleReflectorTreeSelectionChanged(TSharedPtr<FGASAbilitieNodeBase>, ESelectInfo::Type /*SelectInfo*/)
 {
-	SelectedNodes = ReflectorTree->GetSelectedItems();
+	SelectedNodes = AbilitieReflectorTree->GetSelectedItems();
 
 }
 
@@ -590,9 +608,9 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::HandleReflectorTreeContextMenuPtr()
 void SGASAttachEditorImpl::HandleReflectorTreeHiddenColumnsListChanged()
 {
 #if WITH_EDITOR
-	if (ReflectorTree && ReflectorTree->GetHeaderRow())
+	if (AbilitieReflectorTree && AbilitieReflectorTree->GetHeaderRow())
 	{
-		const TArray<FName> HiddenColumnIds = ReflectorTree->GetHeaderRow()->GetHiddenColumnIds();
+		const TArray<FName> HiddenColumnIds = AbilitieReflectorTree->GetHeaderRow()->GetHiddenColumnIds();
 		HiddenReflectorTreeColumns.Reset(HiddenColumnIds.Num());
 		for (const FName Id : HiddenColumnIds)
 		{
@@ -601,6 +619,16 @@ void SGASAttachEditorImpl::HandleReflectorTreeHiddenColumnsListChanged()
 		SaveSettings();
 	}
 #endif
+}
+
+TSharedRef<ITableRow> SGASAttachEditorImpl::HandleAttributesWidgetForFilterListView(TSharedRef< FGASAttributesNodeBase > InItem, const TSharedRef<STableViewBase>& OwnerTable)
+{
+	return SNew(SGASAttributesTreeItem, OwnerTable)
+		.WidgetInfoToVisualize(InItem);
+}
+
+void SGASAttachEditorImpl::HandleAttributesTreeGetChildren(TSharedRef<FGASAttributesNodeBase> InReflectorNode, TArray<TSharedRef<FGASAttributesNodeBase>>& OutChildren)
+{
 }
 
 FText GetOverrideTypeDropDownText_Explicit(const TWeakObjectPtr<UAbilitySystemComponent>& InComp)
@@ -694,9 +722,13 @@ void SGASAttachEditorImpl::LoadSettings()
 
 void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 {
-	FilteredTreeRoot.Reset();
+
+	AbilitieFilteredTreeRoot.Reset();
 	FilteredBlockedTagsItems.Reset();
 	FilteredOwnedTagsItems.Reset();
+
+	AttributesFilteredTreeRoot.Reset();
+
 
 	FASCDebugTargetInfo* TargetInfo = GetDebugTargetInfo(GetWorld());
 
@@ -737,18 +769,46 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 		TArray<FName> LocalDisplayNames;
 		LocalDisplayNames.Add(TargetInfo->DebugCategories[TargetInfo->DebugCategoryIndex]);
 
-		for (FGameplayAbilitySpec& AbilitySpec : ASC->GetActivatableAbilities())
+		if (AbilitieReflectorTree.IsValid())
 		{
-			if (!AbilitySpec.Ability) continue;
-			TSharedRef<FGASAbilitieNode> NewItem = FGASAbilitieNode::Create(ASC, AbilitySpec);
+			for (FGameplayAbilitySpec& AbilitySpec : ASC->GetActivatableAbilities())
+			{
+				if (!AbilitySpec.Ability) continue;
+				TSharedRef<FGASAbilitieNode> NewItem = FGASAbilitieNode::Create(ASC, AbilitySpec);
 
-			NewItem->SetItemVisility(NewItem->ScreenGAMode & ScreenModeState);
+				NewItem->SetItemVisility(NewItem->ScreenGAMode & ScreenModeState);
 
-			FilteredTreeRoot.Add(NewItem);
-			
+				AbilitieFilteredTreeRoot.Add(NewItem);
+
+			}
+			AbilitieReflectorTree->RequestTreeRefresh();
 		}
 
-		ReflectorTree->RequestTreeRefresh();
+		
+
+		if (AttributesReflectorTree.IsValid())
+		{
+			for (UAttributeSet* Set : ASC->GetSpawnedAttributes())
+			{
+				if (!Set)
+				{
+					continue;
+				}
+
+				for (TFieldIterator<FProperty> It(Set->GetClass()); It; ++It)
+				{
+					FGameplayAttribute	Attribute(*It);
+
+					TSharedRef<FGASAttributesNode> NewItem = FGASAttributesNode::Create(ASC, Attribute);
+
+					AttributesFilteredTreeRoot.Add(NewItem);
+				}
+			}
+			AttributesReflectorTree->RequestTreeRefresh();
+		}
+
+		
+
 	}
 }
 
@@ -843,6 +903,7 @@ void SGASAttachEditorImpl::CreateDebugAbilitieCategories(EDebugAbilitieCategorie
 	switch (InType)
 	{
 	case EDebugAbilitieCategories::Attributes:
+		CategoriesWidget = CreateAttributesToolWidget();
 		break;
 	case EDebugAbilitieCategories::GameplayEffects:
 		break;
@@ -942,7 +1003,7 @@ void SGASAttachEditorImpl::HandleScreenModeStateChanged(ECheckBoxState NewValue,
 		break;
 	}
 
-	for (TSharedRef<FGASAbilitieNodeBase>& Item : FilteredTreeRoot)
+	for (TSharedRef<FGASAbilitieNodeBase>& Item : AbilitieFilteredTreeRoot)
 	{
 		Item->SetItemVisility(Item->ScreenGAMode & ScreenModeState);
 	}
@@ -1032,9 +1093,9 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityToolWidget()
 			SNew(SBorder)
 			.Padding(0)
 			[
-				SAssignNew(ReflectorTree, SAbilitieTree)
+				SAssignNew(AbilitieReflectorTree, SAbilitieTree)
 				.ItemHeight(24.f)
-				.TreeItemsSource(&FilteredTreeRoot)
+				.TreeItemsSource(&AbilitieFilteredTreeRoot)
 				.OnGenerateRow(this, &SGASAttachEditorImpl::OnGenerateWidgetForFilterListView)
 				.OnGetChildren(this, &SGASAttachEditorImpl::HandleReflectorTreeGetChildren)
 				.OnSelectionChanged(this, &SGASAttachEditorImpl::HandleReflectorTreeSelectionChanged)
@@ -1067,6 +1128,35 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityToolWidget()
 
 
 	return Widget;
+}
+
+TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAttributesToolWidget()
+{
+	return SNew(SBorder)
+			.Padding(0)
+			[
+				SAssignNew(AttributesReflectorTree,SAttributesTree)
+				.ItemHeight(32.f)
+				.TreeItemsSource(&AttributesFilteredTreeRoot) 
+				.OnGenerateRow(this, &SGASAttachEditorImpl::HandleAttributesWidgetForFilterListView)
+				.OnGetChildren(this, &SGASAttachEditorImpl::HandleAttributesTreeGetChildren)
+				.HighlightParentNodesForSelection(true)
+				.HeaderRow
+				(
+					SNew(SHeaderRow)
+					.CanSelectGeneratedColumn(true)
+
+					+ SHeaderRow::Column(NAME_AttributesName)
+					.DefaultLabel(LOCTEXT("AttributesName", "属性名称"))
+					.FillWidth(0.4f)
+					.ShouldGenerateWidget(true)
+
+					+ SHeaderRow::Column(NAME_GANumericAttribute)
+					.DefaultLabel(LOCTEXT("GAStateType", "当前属性值"))
+					.FillWidth(0.6f)
+
+				)
+			];
 }
 
 #undef LOCTEXT_NAMESPACE

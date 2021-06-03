@@ -389,7 +389,7 @@ void FGASAbilitieNode::CreateChild()
 	{
 		if (!Instance) continue;
 
-		// 因为Instance->Instance在protected里面，也没有其Get方法，好在他是UPROPERTY带UE4反射的结构体
+		// 因为Instance->ActiveTasks在protected里面，也没有其Get方法，好在他是UPROPERTY带UE4反射的结构体
 
 		UArrayProperty* ActiveTasksPtr = FindField<UArrayProperty>(Instance->GetClass(),"ActiveTasks");
 
