@@ -412,85 +412,98 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 			]
 
 			+ SVerticalBox::Slot()
-			.FillHeight(0.2f)
-			[
-				SNew(SVerticalBox)
-
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.HAlign(HAlign_Left)
-				.Padding(2.f)
-				[
-					SNew(STextBlock)
-					.Text(LOCTEXT("CharacterHasOwnTags", "当前角色拥有的Tags"))
-				]
-				
-				+ SVerticalBox::Slot()
-				.FillHeight(1.f)
-				[
-					SNew(SBorder)
-					.Padding(2.f)
-					[
-						SNew(SCharacterTagsView)
-						.ListItemsSource(&FilteredOwnedTagsItems)
-						.OnGenerateTile(this, &SGASAttachEditorImpl::MakeTileTagViewWidget)
-						.ItemHeight(20.f)
-					]
-				]
-
-			]
-
-			+ SVerticalBox::Slot()
-			.FillHeight(0.1f)
-			[
-				SAssignNew(BlockedSlot,SVerticalBox)
-
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.HAlign(HAlign_Left)
-				.Padding(2.f)
-				[
-					SNew(STextBlock)
-					.Text(LOCTEXT("CharacterHasBlaTags", "当前角色阻止的Tags"))
-				]
-
-				+ SVerticalBox::Slot()
-				.FillHeight(1.f)
-				[
-					SNew(SBorder)
-					.Padding(2.f)
-					[
-						SNew(SCharacterTagsView)
-						.ListItemsSource(&FilteredBlockedTagsItems)
-						.OnGenerateTile(this, &SGASAttachEditorImpl::MakeTileTagViewWidget)
-						.ItemHeight(20.f)
-						.ItemWidth(130.f)
-					]
-				]
-			]
-
-			+ SVerticalBox::Slot()
-			.Padding(2.f, 2.f)
-			.AutoHeight()
-			.HAlign(HAlign_Left)
-			[
-				SNew(SComboButton)
-				.OnGetMenuContent(this, &SGASAttachEditorImpl::OnGetShowDebugAbilitieCategories)
-				.VAlign(VAlign_Center)
-				.ContentPadding(2)
-				.ButtonContent()
-				[
-					SNew(STextBlock)
-					.ToolTipText(LOCTEXT("ShowCharactAbilitieType", "选择需要查看角色身上的效果类型"))
-					.Text(this, &SGASAttachEditorImpl::GetShowDebugAbilitieCategoriesDropDownText)
-				]
-			]
-
-			+ SVerticalBox::Slot()
 			.FillHeight(1.f)
 			[
-				//CreateAbilityToolWidget()
-				SAssignNew(CategoriesToolSlot,SOverlay)
+				SNew(SSplitter)
+				.Orientation( Orient_Vertical )
+				+ SSplitter::Slot()
+				.Value(0.2f)
+				[
+					SNew(SVerticalBox)
+
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.HAlign(HAlign_Left)
+					.Padding(2.f)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("CharacterHasOwnTags", "当前角色拥有的Tags"))
+					]
+
+					+ SVerticalBox::Slot()
+					.FillHeight(1.f)
+					[
+						SNew(SBorder)
+						.Padding(2.f)
+						[
+							SNew(SCharacterTagsView)
+							.ListItemsSource(&FilteredOwnedTagsItems)
+							.OnGenerateTile(this, &SGASAttachEditorImpl::MakeTileTagViewWidget)
+							.ItemHeight(20.f)
+						]
+					]
+
+				]
+
+				+ SSplitter::Slot()
+				.Value(0.1f)
+				[
+					SAssignNew(BlockedSlot, SVerticalBox)
+
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.HAlign(HAlign_Left)
+					.Padding(2.f)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("CharacterHasBlaTags", "当前角色阻止的Tags"))
+					]
+
+					+ SVerticalBox::Slot()
+					.FillHeight(1.f)
+					[
+						SNew(SBorder)
+						.Padding(2.f)
+						[
+							SNew(SCharacterTagsView)
+							.ListItemsSource(&FilteredBlockedTagsItems)
+							.OnGenerateTile(this, &SGASAttachEditorImpl::MakeTileTagViewWidget)
+							.ItemHeight(20.f)
+							.ItemWidth(130.f)
+						]
+					]
+				]
+
+				+ SSplitter::Slot()
+				.Value(1.f)
+				[
+					SNew(SVerticalBox)
+
+					+ SVerticalBox::Slot()
+					.Padding(2.f, 2.f)
+					.AutoHeight()
+					.HAlign(HAlign_Left)
+					[
+						SNew(SComboButton)
+						.OnGetMenuContent(this, &SGASAttachEditorImpl::OnGetShowDebugAbilitieCategories)
+						.VAlign(VAlign_Center)
+						.ContentPadding(2)
+						.ButtonContent()
+						[
+							SNew(STextBlock)
+							.ToolTipText(LOCTEXT("ShowCharactAbilitieType", "选择需要查看角色身上的效果类型"))
+							.Text(this, &SGASAttachEditorImpl::GetShowDebugAbilitieCategoriesDropDownText)
+						]
+					]
+
+					+ SVerticalBox::Slot()
+					.FillHeight(1.f)
+					[
+						//CreateAbilityToolWidget()
+						SAssignNew(CategoriesToolSlot, SOverlay)
+					]
+				]
+
 			]
 
 		];
