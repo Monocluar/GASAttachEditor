@@ -254,8 +254,15 @@ private:
 	// 拥有标签组
 	TArray<TSharedPtr<FGASCharacterTagsBase>> FilteredOwnedTagsItems;
 
+	// 拥有标签组控件
+	TSharedPtr<SCharacterTagsView> FilteredOwnedTagsView;
+
 	// 阻止的标签组
 	TArray<TSharedPtr<FGASCharacterTagsBase>> FilteredBlockedTagsItems;
+
+	// 阻止标签组控件
+	TSharedPtr<SCharacterTagsView> FilteredBlockedTagsView;
+
 
 	TSharedPtr<SVerticalBox> BlockedSlot;
 
@@ -436,7 +443,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 						SNew(SBorder)
 						.Padding(2.f)
 						[
-							SNew(SCharacterTagsView)
+							SAssignNew(FilteredOwnedTagsView, SCharacterTagsView)
 							.ListItemsSource(&FilteredOwnedTagsItems)
 							.OnGenerateTile(this, &SGASAttachEditorImpl::MakeTileTagViewWidget)
 							.ItemHeight(20.f)
@@ -465,7 +472,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 						SNew(SBorder)
 						.Padding(2.f)
 						[
-							SNew(SCharacterTagsView)
+							SAssignNew(FilteredBlockedTagsView,SCharacterTagsView)
 							.ListItemsSource(&FilteredBlockedTagsItems)
 							.OnGenerateTile(this, &SGASAttachEditorImpl::MakeTileTagViewWidget)
 							.ItemHeight(20.f)
@@ -756,6 +763,9 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 		{
 			FilteredOwnedTagsItems.Add(FGASCharacterTags::Create(ASC,InTag));
 		}
+
+		FilteredOwnedTagsView->RequestListRefresh();
+
 		FGameplayTagContainer BlockTags;
 		ASC->GetBlockedAbilityTags(BlockTags);
 
@@ -770,6 +780,8 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 			{
 				FilteredBlockedTagsItems.Add(FGASCharacterTags::Create(ASC,InTag));
 			}
+
+			FilteredBlockedTagsView->RequestListRefresh();
 		}
 		else
 		{

@@ -391,7 +391,7 @@ void FGASAbilitieNode::CreateChild()
 
 		// 因为Instance->ActiveTasks在protected里面，也没有其Get方法，好在他是UPROPERTY带UE4反射的结构体
 
-		UArrayProperty* ActiveTasksPtr = FindField<UArrayProperty>(Instance->GetClass(),"ActiveTasks");
+		FArrayProperty* ActiveTasksPtr = FindFProperty<FArrayProperty>(Instance->GetClass(),"ActiveTasks");
 
 		if (!ActiveTasksPtr) continue;
 
@@ -399,6 +399,7 @@ void FGASAbilitieNode::CreateChild()
 
 		for (UGameplayTask*& Item : ActiveTasks)
 		{
+			if(!Item) continue;
 			AddChildNode(FGASAbilitieNode::Create(ASComponent, AbilitySpecPtr , Item));
 		}
 
