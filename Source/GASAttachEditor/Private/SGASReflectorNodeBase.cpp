@@ -3,8 +3,11 @@
 #include "Widgets/Input/SHyperlink.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
+
+#if WITH_EDITOR
 #include "Editor/EditorEngine.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#endif
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 
@@ -192,6 +195,7 @@ void SGASAbilitieTreeItem::HandleHyperlinkNavigate()
 		return;
 	}
 
+#if WITH_EDITOR
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(*CachedAssetDataStr);
 
@@ -199,7 +203,7 @@ void SGASAbilitieTreeItem::HandleHyperlinkNavigate()
 	{
 		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssetData.GetAsset());
 	}
-
+#endif
 	//FAccessSourceCode::CreateRaw( CurrentSourceCodeAccessor, &ISourceCodeAccessor::OpenFileAtLine )
 }
 

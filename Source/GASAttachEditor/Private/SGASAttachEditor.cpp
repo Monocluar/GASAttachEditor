@@ -9,6 +9,9 @@
 #include "SGASCharacterTagsBase.h"
 #include "SGASAttributesNodeBase.h"
 #include "Widgets/Layout/SWrapBox.h"
+#include "Widgets/SToolTip.h"
+#include "Widgets/Input/SComboButton.h"
+#include "Framework/Application/SlateApplication.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 
@@ -31,12 +34,12 @@ struct FASCDebugTargetInfo
 	TWeakObjectPtr<UAbilitySystemComponent>	LastDebugTarget;
 };
 
-TArray<FASCDebugTargetInfo>	AbilitySystemDebugInfoList;
+TArray<FASCDebugTargetInfo>	AbilitySystemAttachDebugInfoList;
 
-FASCDebugTargetInfo* GetDebugTargetInfo(UWorld* World)
+FASCDebugTargetInfo* GetASCDebugTargetInfo(UWorld* World)
 {
 	FASCDebugTargetInfo* TargetInfo = nullptr;
-	for (FASCDebugTargetInfo& Info : AbilitySystemDebugInfoList)
+	for (FASCDebugTargetInfo& Info : AbilitySystemAttachDebugInfoList)
 	{
 		if (Info.TargetWorld.Get() == World)
 		{
@@ -46,7 +49,7 @@ FASCDebugTargetInfo* GetDebugTargetInfo(UWorld* World)
 	}
 	if (TargetInfo == nullptr)
 	{
-		TargetInfo = &AbilitySystemDebugInfoList[AbilitySystemDebugInfoList.AddDefaulted()];
+		TargetInfo = &AbilitySystemAttachDebugInfoList[AbilitySystemAttachDebugInfoList.AddDefaulted()];
 		TargetInfo->TargetWorld = World;
 	}
 	return TargetInfo;
@@ -132,7 +135,6 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info,const UAbility
 	return Info->LastDebugTarget.Get();
 }
 
-
 class SGASAttachEditorImpl : public SGASAttachEditor
 {
 	typedef STreeView<TSharedRef<FGASAbilitieNodeBase>> SAbilitieTree;
@@ -171,7 +173,7 @@ protected:
 	void HandleReflectorTreeSelectionChanged(TSharedPtr<FGASAbilitieNodeBase>, ESelectInfo::Type /*SelectInfo*/);
 
 	// 提示小部件
-	TSharedRef<SToolTip> GenerateToolTipForReflectorNode( TSharedRef<FGASAbilitieNodeBase> InReflectorNode );
+	TSharedPtr<IToolTip> GenerateToolTipForReflectorNode( TSharedRef<FGASAbilitieNodeBase> InReflectorNode );
 
 	// 当请求反射器树中的上下文菜单时的回调
 	TSharedPtr<SWidget> HandleReflectorTreeContextMenuPtr();
@@ -203,7 +205,7 @@ protected:
 	void HandlePickingModeStateChanged(ECheckBoxState NewValue);
 
 	// 设置状态改变的东东
-	void SetPickingMode(bool bTick);
+	virtual void SetPickingMode(bool bTick) override;
 
 	// 设置单选框名称
 	FText HandleGetPickingModeText() const;
@@ -455,8 +457,11 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 
 	UpdateGameplayCueListItemsButtom();
 
+#if WITH_EDITOR
 	FSlateApplication::Get().OnApplicationPreInputKeyDownListener().AddRaw(this, &SGASAttachEditorImpl::OnApplicationPreInputKeyDownListener);
-
+#else
+	FSlateApplication::Get().RegisterInputPreProcessor(MakeShareable(new FAttachInputProcessor(this)));
+#endif
 }
 
 
@@ -539,7 +544,7 @@ void SGASAttachEditorImpl::HandleReflectorTreeSelectionChanged(TSharedPtr<FGASAb
 
 }
 
-TSharedRef<SToolTip> SGASAttachEditorImpl::GenerateToolTipForReflectorNode(TSharedRef<FGASAbilitieNodeBase> InReflectorNode)
+TSharedPtr<IToolTip> SGASAttachEditorImpl::GenerateToolTipForReflectorNode(TSharedRef<FGASAbilitieNodeBase> InReflectorNode)
 {
 	return SNew(SToolTip)
 			.Text(this, &SGASAttachEditorImpl::GenerateToolTipForText, InReflectorNode)
@@ -684,7 +689,7 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 	AttributesFilteredTreeRoot.Reset();
 
 
-	FASCDebugTargetInfo* TargetInfo = GetDebugTargetInfo(GetWorld());
+	FASCDebugTargetInfo* TargetInfo = GetASCDebugTargetInfo(GetWorld());
 
 	if (UAbilitySystemComponent* ASC = GetDebugTarget(TargetInfo, SelectAbilitySystemComponent.Get()))
 	{
@@ -914,7 +919,7 @@ UWorld* SGASAttachEditorImpl::GetWorld()
 
 	for (auto& Item : WorldList)
 	{
-		if (Item.WorldType == EWorldType::Type::PIE )
+		if (Item.WorldType == EWorldType::Type::PIE || Item.WorldType == EWorldType::Type::Game)
 		{
 			NewWorldList.Add(Item);
 			if (Item.ContextHandle == SelectWorldSceneConetextHandle)
@@ -1184,5 +1189,21 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAttributesToolWidget()
 				)
 			];
 }
+
+FAttachInputProcessor::FAttachInputProcessor(SGASAttachEditor* InWidgetPtr)
+	:GASAttachEditorWidgetPtr(InWidgetPtr)
+{
+}
+
+bool FAttachInputProcessor::HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
+{
+	if (InKeyEvent.GetKey() == EKeys::End && GASAttachEditorWidgetPtr)
+	{
+		GASAttachEditorWidgetPtr->SetPickingMode(false);
+	}
+
+	return false;
+}
+
 
 #undef LOCTEXT_NAMESPACE

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayAbilitySpec.h"
+#include "GameplayTask.h"
 
 enum EGAAbilitieNode
 {

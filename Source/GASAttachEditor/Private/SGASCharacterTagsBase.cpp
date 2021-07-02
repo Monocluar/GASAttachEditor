@@ -25,7 +25,9 @@ void SCharacterTagsViewItem::Construct(const FArguments& InArgs)
 	ChildSlot
 		[
 			SNew(SButton)
+#if WITH_EDITOR
 			.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+#endif
 			.ToolTipText(TagsItem.IsValid() ? TagsItem->GetTagTipName() : FText())
 			.HAlign(HAlign_Center)
 			.VAlign(VAlign_Center)
@@ -55,7 +57,9 @@ FText FGASCharacterTags::GetTagTipName() const
 		return FText();
 	}
 
-	FString Str = FString::Printf(TEXT("%s [%d]"),*GameplayTag.ToString(),ASComponent->GetTagCount(GameplayTag));
+	FString Str = FString::Printf(TEXT("%s [%d]"), *GameplayTag.ToString(), ASComponent->GetTagCount(GameplayTag));
+
+#if WITH_EDITOR
 	FString OutComment; FName OutTagSource; bool bOutIsTagExplicit, bOutIsRestrictedTag, bOutAllowNonRestrictedChildren;
 	if (UGameplayTagsManager::Get().GetTagEditorData(*GameplayTag.ToString(),OutComment,OutTagSource,bOutIsTagExplicit,bOutIsRestrictedTag,bOutAllowNonRestrictedChildren))
 	{
@@ -74,7 +78,7 @@ FText FGASCharacterTags::GetTagTipName() const
 			Str += FString::Printf(TEXT("\n\n%s"),*OutComment);
 		}
 	}
-
+#endif
 	for (FGameplayAbilitySpec& AbilitySpec : ASComponent->GetActivatableAbilities())
 	{
 		if (!AbilitySpec.IsActive() || !AbilitySpec.Ability) continue;

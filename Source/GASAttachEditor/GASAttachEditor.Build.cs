@@ -36,16 +36,13 @@ public class GASAttachEditor : ModuleRules
 			{
 				"Projects",
 				"InputCore",
-				"UnrealEd",
-				"ToolMenus",
-				"CoreUObject",
+                "CoreUObject",
 				"Engine",
 				"Slate",
 				"SlateCore",
 				"GameplayAbilities",
 				"GameplayTags",
 				"AssetRegistry",
-				"EditorStyle",
 				"ApplicationCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
@@ -58,5 +55,17 @@ public class GASAttachEditor : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
-	}
+
+        if (Target.Type == TargetType.Editor)
+        {
+            PrivateDependencyModuleNames.AddRange(
+            new string[]
+            {
+                "UnrealEd",
+                "EditorStyle",
+				"ToolMenus",
+			}
+            );
+        }
+    }
 }

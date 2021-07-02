@@ -16,7 +16,7 @@
 	"Modules": [
 		{
 			"Name": "GASAttachEditor",
-			"Type": "Editor",
+			"Type": "RuntimeNoCommandlet",
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"GameplayAbilities"
