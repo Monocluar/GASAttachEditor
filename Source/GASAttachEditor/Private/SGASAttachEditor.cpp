@@ -8,6 +8,7 @@
 #include "Widgets/Views/STreeView.h"
 #include "SGASCharacterTagsBase.h"
 #include "SGASAttributesNodeBase.h"
+#include "Widgets/Layout/SWrapBox.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 
@@ -246,25 +247,24 @@ protected:
 	
 	FORCEINLINE UWorld* GetWorld();
 
-protected:
-
-	TSharedRef<ITableRow> MakeTileTagViewWidget(TSharedPtr<FGASCharacterTagsBase> AssetItem, const TSharedRef<STableViewBase>& OwnerTable);
-
 private:
-	// 拥有标签组
-	TArray<TSharedPtr<FGASCharacterTagsBase>> FilteredOwnedTagsItems;
 
 	// 拥有标签组控件
-	TSharedPtr<SCharacterTagsView> FilteredOwnedTagsView;
-
-	// 阻止的标签组
-	TArray<TSharedPtr<FGASCharacterTagsBase>> FilteredBlockedTagsItems;
+	TSharedPtr<SWrapBox> FilteredOwnedTagsView;
 
 	// 阻止标签组控件
-	TSharedPtr<SCharacterTagsView> FilteredBlockedTagsView;
+	TSharedPtr<SWrapBox> FilteredBlockedTagsView;
 
+	// 老的Tag数据
+	FGameplayTagContainer OldOwnerTags;
 
-	TSharedPtr<SVerticalBox> BlockedSlot;
+	// 老的阻止Tag数据
+	FGameplayTagContainer OldBlockedTags;
+
+protected:
+
+	// 创建Tags控件
+	TSharedPtr<SWidget> CreateAbilityTagWidget();
 
 protected:
 
@@ -421,96 +421,32 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 			+ SVerticalBox::Slot()
 			.FillHeight(1.f)
 			[
-				SNew(SSplitter)
-				.Orientation( Orient_Vertical )
-				+ SSplitter::Slot()
-				.Value(0.2f)
-				[
-					SNew(SVerticalBox)
+				SNew(SVerticalBox)
 
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					.HAlign(HAlign_Left)
-					.Padding(2.f)
+				+ SVerticalBox::Slot()
+				.Padding(2.f, 2.f)
+				.AutoHeight()
+				.HAlign(HAlign_Left)
+				[
+					SNew(SComboButton)
+					.OnGetMenuContent(this, &SGASAttachEditorImpl::OnGetShowDebugAbilitieCategories)
+					.VAlign(VAlign_Center)
+					.ContentPadding(2)
+					.ButtonContent()
 					[
 						SNew(STextBlock)
-						.Text(LOCTEXT("CharacterHasOwnTags", "当前角色拥有的Tags"))
+						.ToolTipText(LOCTEXT("ShowCharactAbilitieType", "选择需要查看角色身上的效果类型"))
+						.Text(this, &SGASAttachEditorImpl::GetShowDebugAbilitieCategoriesDropDownText)
 					]
-
-					+ SVerticalBox::Slot()
-					.FillHeight(1.f)
-					[
-						SNew(SBorder)
-						.Padding(2.f)
-						[
-							SAssignNew(FilteredOwnedTagsView, SCharacterTagsView)
-							.ListItemsSource(&FilteredOwnedTagsItems)
-							.OnGenerateTile(this, &SGASAttachEditorImpl::MakeTileTagViewWidget)
-							.ItemHeight(20.f)
-						]
-					]
-
 				]
 
-				+ SSplitter::Slot()
-				.Value(0.1f)
+				+ SVerticalBox::Slot()
+				.FillHeight(1.f)
 				[
-					SAssignNew(BlockedSlot, SVerticalBox)
-
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					.HAlign(HAlign_Left)
-					.Padding(2.f)
-					[
-						SNew(STextBlock)
-						.Text(LOCTEXT("CharacterHasBlaTags", "当前角色阻止的Tags"))
-					]
-
-					+ SVerticalBox::Slot()
-					.FillHeight(1.f)
-					[
-						SNew(SBorder)
-						.Padding(2.f)
-						[
-							SAssignNew(FilteredBlockedTagsView,SCharacterTagsView)
-							.ListItemsSource(&FilteredBlockedTagsItems)
-							.OnGenerateTile(this, &SGASAttachEditorImpl::MakeTileTagViewWidget)
-							.ItemHeight(20.f)
-							.ItemWidth(130.f)
-						]
-					]
+					//CreateAbilityToolWidget()
+					SAssignNew(CategoriesToolSlot, SOverlay)
 				]
-
-				+ SSplitter::Slot()
-				.Value(1.f)
-				[
-					SNew(SVerticalBox)
-
-					+ SVerticalBox::Slot()
-					.Padding(2.f, 2.f)
-					.AutoHeight()
-					.HAlign(HAlign_Left)
-					[
-						SNew(SComboButton)
-						.OnGetMenuContent(this, &SGASAttachEditorImpl::OnGetShowDebugAbilitieCategories)
-						.VAlign(VAlign_Center)
-						.ContentPadding(2)
-						.ButtonContent()
-						[
-							SNew(STextBlock)
-							.ToolTipText(LOCTEXT("ShowCharactAbilitieType", "选择需要查看角色身上的效果类型"))
-							.Text(this, &SGASAttachEditorImpl::GetShowDebugAbilitieCategoriesDropDownText)
-						]
-					]
-
-					+ SVerticalBox::Slot()
-					.FillHeight(1.f)
-					[
-						//CreateAbilityToolWidget()
-						SAssignNew(CategoriesToolSlot, SOverlay)
-					]
-				]
-
+				
 			]
 
 		];
@@ -727,7 +663,7 @@ void SGASAttachEditorImpl::SetPickingMode(bool bTick)
 
 FText SGASAttachEditorImpl::HandleGetPickingModeText() const
 {
-	return bPickingTick ? LOCTEXT("bPickingTickYes", "持续更新GA数据中") : LOCTEXT("bPickingTickNo", "更新") ;
+	return bPickingTick ? LOCTEXT("bPickingTickYes", "按 END 键停止刷新") : LOCTEXT("bPickingTickNo", "持续更新") ;
 }
 
 void SGASAttachEditorImpl::SaveSettings()
@@ -744,8 +680,6 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 {
 
 	AbilitieFilteredTreeRoot.Reset();
-	FilteredBlockedTagsItems.Reset();
-	FilteredOwnedTagsItems.Reset();
 
 	AttributesFilteredTreeRoot.Reset();
 
@@ -756,44 +690,51 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 	{
 		SelectAbilitySystemComponent = ASC;
 
-		FGameplayTagContainer OwnerTags;
-		SelectAbilitySystemComponent->GetOwnedGameplayTags(OwnerTags);
-
-		for (FGameplayTag InTag : OwnerTags)
+		// 标签组
+		if (FilteredOwnedTagsView.IsValid())
 		{
-			FilteredOwnedTagsItems.Add(FGASCharacterTags::Create(ASC,InTag));
-		}
-
-		FilteredOwnedTagsView->RequestListRefresh();
-
-		FGameplayTagContainer BlockTags;
-		ASC->GetBlockedAbilityTags(BlockTags);
-
-		if (BlockTags.Num())
-		{
-			if (BlockedSlot.IsValid())
+			FGameplayTagContainer OwnerTags;
+			SelectAbilitySystemComponent->GetOwnedGameplayTags(OwnerTags);
+			if (OldOwnerTags != OwnerTags)
 			{
-				BlockedSlot->SetVisibility(EVisibility::SelfHitTestInvisible);
+				OldOwnerTags = OwnerTags;
+				FilteredOwnedTagsView->ClearChildren();
+
+				for (FGameplayTag InTag : OwnerTags)
+				{
+					FilteredOwnedTagsView->AddSlot()
+						[
+							SNew(SCharacterTagsViewItem)
+							.TagsItem(FGASCharacterTags::Create(ASC, InTag, "ActivationOwnedTags"))
+						];
+				}
+
 			}
+			
 
-			for (FGameplayTag InTag : BlockTags)
-			{
-				FilteredBlockedTagsItems.Add(FGASCharacterTags::Create(ASC,InTag));
-			}
+			FGameplayTagContainer BlockTags;
+			ASC->GetBlockedAbilityTags(BlockTags);
 
-			FilteredBlockedTagsView->RequestListRefresh();
-		}
-		else
-		{
-			if (BlockedSlot.IsValid())
+			if (BlockTags != OldBlockedTags)
 			{
-				BlockedSlot->SetVisibility(EVisibility::Collapsed);
+				FilteredBlockedTagsView->ClearChildren();
+
+				for (FGameplayTag InTag : BlockTags)
+				{
+					FilteredBlockedTagsView->AddSlot()
+						[
+							SNew(SCharacterTagsViewItem)
+							.TagsItem(FGASCharacterTags::Create(ASC, InTag, "ActivationBlockedTags"))
+						];
+				}
+
 			}
 		}
 
 		TArray<FName> LocalDisplayNames;
 		LocalDisplayNames.Add(TargetInfo->DebugCategories[TargetInfo->DebugCategoryIndex]);
 
+		// 技能组
 		if (AbilitieReflectorTree.IsValid())
 		{
 			for (FGameplayAbilitySpec& AbilitySpec : ASC->GetActivatableAbilities())
@@ -807,10 +748,10 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 
 			}
 			AbilitieReflectorTree->RequestTreeRefresh();
+
 		}
 
-		
-
+		// 属性组
 		if (AttributesReflectorTree.IsValid())
 		{
 			for (UAttributeSet* Set : ASC->GetSpawnedAttributes())
@@ -830,9 +771,8 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 				}
 			}
 			AttributesReflectorTree->RequestTreeRefresh();
-		}
 
-		
+		}
 
 	}
 }
@@ -850,7 +790,7 @@ TSharedRef<SWidget> SGASAttachEditorImpl::OnGetShowDebugAbilitieCategories()
 {
 	FMenuBuilder MenuBuilder(true, NULL);
 
-	TArray<EDebugAbilitieCategories> Categories({ EDebugAbilitieCategories::Ability,EDebugAbilitieCategories::Attributes,EDebugAbilitieCategories::GameplayEffects });
+	TArray<EDebugAbilitieCategories> Categories({ EDebugAbilitieCategories::Ability,EDebugAbilitieCategories::Attributes,EDebugAbilitieCategories::GameplayEffects, EDebugAbilitieCategories::Tags });
 
 	for (EDebugAbilitieCategories& Type : Categories)
 	{
@@ -881,6 +821,9 @@ FORCEINLINE FName SGASAttachEditorImpl::GetAbilitieCategoriesName(EDebugAbilitie
 	FName TypeName;
 	switch (InType)
 	{
+	case EDebugAbilitieCategories::Tags:
+		TypeName = "Tags";
+		break;
 	case EDebugAbilitieCategories::Ability:
 		TypeName = "Ability";
 		break;
@@ -900,6 +843,9 @@ FORCEINLINE FText SGASAttachEditorImpl::GetAbilitieCategoriesText(EDebugAbilitie
 	FText TypeText;
 	switch (InType)
 	{
+	case EDebugAbilitieCategories::Tags:
+		TypeText = LOCTEXT("Categories_Tigs", "标签");
+		break;
 	case EDebugAbilitieCategories::Ability:
 		TypeText = LOCTEXT("Categories_Ability", "技能");
 		break;
@@ -931,9 +877,18 @@ void SGASAttachEditorImpl::CreateDebugAbilitieCategories(EDebugAbilitieCategorie
 		CategoriesWidget = CreateAttributesToolWidget();
 		break;
 	case EDebugAbilitieCategories::GameplayEffects:
+		CategoriesWidget = SNew(SBox)
+			.HAlign(EHorizontalAlignment::HAlign_Center)
+			.VAlign(EVerticalAlignment::VAlign_Center)
+			[
+				SNew(STextBlock).Text(FText::FromString(TEXT("还没有做，不急")))
+			];
 		break;
 	case EDebugAbilitieCategories::Ability:
 		CategoriesWidget = CreateAbilityToolWidget();
+		break;
+	case EDebugAbilitieCategories::Tags:
+		CategoriesWidget = CreateAbilityTagWidget();
 		break;
 	}
 
@@ -989,19 +944,65 @@ UWorld* SGASAttachEditorImpl::GetWorld()
 
 }
 
-TSharedRef<ITableRow> SGASAttachEditorImpl::MakeTileTagViewWidget(TSharedPtr<FGASCharacterTagsBase> AssetItem, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityTagWidget()
 {
-	TSharedPtr< STableRow<TSharedPtr<FGASCharacterTagsBase>> > TableRowWidget;
-	SAssignNew(TableRowWidget, STableRow<TSharedPtr<FGASCharacterTagsBase>>, OwnerTable)
-		.Style(FEditorStyle::Get(), "ContentBrowser.AssetListView.TableRow");
+	return SNew(SSplitter)
+		.Orientation(Orient_Vertical)
+		+ SSplitter::Slot()
+		.Value(0.7f)
+		[
+			SNew(SVerticalBox)
 
-	TSharedRef<SCharacterTagsViewItem> Item = SNew(SCharacterTagsViewItem)
-		.TagsItem(AssetItem);
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.HAlign(HAlign_Left)
+			.Padding(2.f)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("CharacterHasOwnTags", "当前角色拥有的Tags"))
+			]
 
+			+ SVerticalBox::Slot()
+			.FillHeight(1.f)
+			[
+				SNew(SBorder)
+				.Padding(2.f)
+				[
+					SAssignNew(FilteredOwnedTagsView, SWrapBox)
+					.Orientation(EOrientation::Orient_Horizontal)
+					.UseAllottedSize(true)
+					.InnerSlotPadding(FVector2D(5.f))
+				]
+			]
+		]
 
-	TableRowWidget->SetContent(Item);
+		+ SSplitter::Slot()
+		.Value(0.3f)
+		[
+			SNew(SVerticalBox)
 
-	return TableRowWidget.ToSharedRef();
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.HAlign(HAlign_Left)
+			.Padding(2.f)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("CharacterHasBlaTags", "当前角色阻止的Tags"))
+			]
+
+			+ SVerticalBox::Slot()
+			.FillHeight(1.f)
+			[
+				SNew(SBorder)
+				.Padding(2.f)
+				[
+					SAssignNew(FilteredBlockedTagsView, SWrapBox)
+					.Orientation(EOrientation::Orient_Horizontal)
+					.UseAllottedSize(true)
+					.InnerSlotPadding(FVector2D(5.f))
+				]
+			]
+	];
 }
 
 void SGASAttachEditorImpl::OnApplicationPreInputKeyDownListener(const FKeyEvent& InKeyEvent)

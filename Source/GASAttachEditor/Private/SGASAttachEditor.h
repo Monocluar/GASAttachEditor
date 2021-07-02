@@ -7,6 +7,9 @@
 
 enum EDebugAbilitieCategories
 {
+	// 标签
+	Tags,
+
 	// 数据
 	Attributes,
 

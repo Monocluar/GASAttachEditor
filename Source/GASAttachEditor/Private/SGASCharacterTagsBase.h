@@ -72,15 +72,17 @@ public:
 
 	virtual FText GetTagTipName() const override;
 
-	static TSharedRef<FGASCharacterTags> Create(TWeakObjectPtr<UAbilitySystemComponent> InASComponent, FGameplayTag InGameplayTag);
+	static TSharedRef<FGASCharacterTags> Create(TWeakObjectPtr<UAbilitySystemComponent> InASComponent, FGameplayTag InGameplayTag, FName InWidegtName);
 
 private:
-	explicit FGASCharacterTags(TWeakObjectPtr<UAbilitySystemComponent> InASComponent,  FGameplayTag InGameplayTag);
+	explicit FGASCharacterTags(TWeakObjectPtr<UAbilitySystemComponent> InASComponent,  FGameplayTag InGameplayTag, FName InWidegtName);
 
 protected:
 
 	TWeakObjectPtr<UAbilitySystemComponent> ASComponent;
 
 	FGameplayTag GameplayTag;
+
+	FName WidegtName;
 
 };
