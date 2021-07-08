@@ -28,6 +28,8 @@ public:
 	SLATE_USER_ARGS(SGASAttachEditor) {}
 	SLATE_END_ARGS()
 
+		
+
 public:
 	virtual void Construct(const FArguments& InArgs) = 0;
 
@@ -35,6 +37,7 @@ public:
 	virtual void SetPickingMode(bool bTick) = 0;
 };
 
+#if !UE_SERVER
 class FAttachInputProcessor : public IInputProcessor
 {
 public:
@@ -50,3 +53,4 @@ private:
 private:
 	SGASAttachEditor* GASAttachEditorWidgetPtr;
 };
+#endif

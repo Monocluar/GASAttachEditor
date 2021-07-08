@@ -139,6 +139,8 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info,const UAbility
 	return Info->LastDebugTarget.Get();
 }
 
+#if !UE_SERVER
+
 class SGASAttachEditorImpl : public SGASAttachEditor
 {
 	typedef STreeView<TSharedRef<FGASAbilitieNodeBase>> SAbilitieTree;
@@ -148,6 +150,9 @@ public:
 	virtual void Construct(const FArguments& InArgs) override;
 
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
+
+public:
+	virtual ~SGASAttachEditorImpl() override;
 
 protected:
 	// 当前筛选世界场景
@@ -249,6 +254,9 @@ private:
 	// 当前选择Categories类型
 	EDebugAbilitieCategories SelectAbilitieCategories;
 
+	// 按键监听指针
+	TSharedPtr<IInputProcessor> InputPtr;
+
 protected: 
 	
 	FORCEINLINE UWorld* GetWorld();
@@ -347,6 +355,7 @@ private:
 	TArray<SGameplayTagWidget::FEditableGameplayTagContainerDatum> EditableBlockedContainers;
 	FGameplayTagContainer BlockedTagContainer;
 	FGameplayTagContainer OldBlockedTagContainer;
+
 #endif
 
 };
@@ -480,17 +489,17 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 	HandleShowDebugAbilitieCategories(Ability);
 
 	UpdateGameplayCueListItemsButtom();
+	InputPtr = MakeShareable(new FAttachInputProcessor(this));
+	FSlateApplication::Get().RegisterInputPreProcessor(InputPtr);
 
 #if WITH_EDITOR
-	FSlateApplication::Get().OnApplicationPreInputKeyDownListener().AddRaw(this, &SGASAttachEditorImpl::OnApplicationPreInputKeyDownListener);
+	//TagKeyDownHandle = FSlateApplication::Get().OnApplicationPreInputKeyDownListener().AddRaw(this, &SGASAttachEditorImpl::OnApplicationPreInputKeyDownListener);
 
 	EditableOwnerContainers.Empty();
 	EditableBlockedContainers.Empty();
 
 	EditableOwnerContainers.Add(SGameplayTagWidget::FEditableGameplayTagContainerDatum(nullptr,&OwnweTagContainer));
 	EditableBlockedContainers.Add(SGameplayTagWidget::FEditableGameplayTagContainerDatum(nullptr,&BlockedTagContainer));
-#else
-	FSlateApplication::Get().RegisterInputPreProcessor(MakeShareable(new FAttachInputProcessor(this)));
 #endif
 }
 
@@ -501,6 +510,15 @@ void SGASAttachEditorImpl::Tick(const FGeometry& AllottedGeometry, const double 
 	{
 		UpdateGameplayCueListItems();
 	}
+}
+
+
+SGASAttachEditorImpl::~SGASAttachEditorImpl()
+{
+	FSlateApplication::Get().UnregisterInputPreProcessor(InputPtr);
+	InputPtr = nullptr;
+
+	SWidget::~SWidget();
 }
 
 TSharedRef<SWidget> SGASAttachEditorImpl::OnGetShowWorldTypeMenu()
@@ -734,7 +752,10 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 			{
 				OldOwnerTags = OwnerTags;
 				FilteredOwnedTagsView->ClearChildren();
+#if WITH_EDITOR
 				OwnweTagContainer.Reset();
+#endif
+				
 				for (FGameplayTag InTag : OwnerTags)
 				{
 					FilteredOwnedTagsView->AddSlot()
@@ -742,7 +763,9 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 							SNew(SCharacterTagsViewItem)
 							.TagsItem(FGASCharacterTags::Create(ASC, InTag, "ActivationOwnedTags"))
 						];
+#if WITH_EDITOR
 					OwnweTagContainer.AddTag(InTag);
+#endif
 				}
 
 			}
@@ -754,7 +777,9 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 			if (BlockTags != OldBlockedTags)
 			{
 				FilteredBlockedTagsView->ClearChildren();
+#if WITH_EDITOR
 				BlockedTagContainer.Reset();
+#endif
 				for (FGameplayTag InTag : BlockTags)
 				{
 					FilteredBlockedTagsView->AddSlot()
@@ -762,7 +787,9 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 							SNew(SCharacterTagsViewItem)
 							.TagsItem(FGASCharacterTags::Create(ASC, InTag, "ActivationBlockedTags"))
 						];
+#if WITH_EDITOR
 					BlockedTagContainer.AddTag(InTag);
+#endif
 				}
 
 			}
@@ -1055,7 +1082,7 @@ void SGASAttachEditorImpl::OnApplicationPreInputKeyDownListener(const FKeyEvent&
 		SetPickingMode(false);
 	}
 }
-
+#if WITH_EDITOR
 FReply SGASAttachEditorImpl::OnMouseButtonUpTags(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent, FName TagsName)
 {
 	if (MouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
@@ -1082,9 +1109,9 @@ FReply SGASAttachEditorImpl::OnMouseButtonUpTags(const FGeometry& MyGeometry, co
 		}
 
 	}
-
 	return FReply::Handled();
 }
+
 
 void SGASAttachEditorImpl::RefreshTagList(FName TagsName)
 {
@@ -1131,7 +1158,7 @@ void SGASAttachEditorImpl::RefreshTagList(FName TagsName)
 	}
 	*OldTagContainer = *NewTagContainer;
 }
-
+#endif
 void SGASAttachEditorImpl::HandleScreenModeStateChanged(ECheckBoxState NewValue, EScreenGAModeState InState)
 {
 	switch (NewValue)
@@ -1319,5 +1346,5 @@ bool FAttachInputProcessor::HandleKeyDownEvent(FSlateApplication& SlateApp, cons
 	return false;
 }
 
-
+#endif
 #undef LOCTEXT_NAMESPACE

@@ -19,12 +19,12 @@ static const FName GASAttachEditorTabName("GASAttachEditor");
 void FGASAttachEditorModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	
+#if !UE_SERVER
 	FGASAttachEditorStyle::Initialize();
 	FGASAttachEditorStyle::ReloadTextures();
 
 	FGASAttachEditorCommands::Register();
-	
+
 	PluginCommands = MakeShareable(new FUICommandList);
 
 	PluginCommands->MapAction(
@@ -37,13 +37,15 @@ void FGASAttachEditorModule::StartupModule()
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(GASAttachEditorTabName, FOnSpawnTab::CreateRaw(this, &FGASAttachEditorModule::OnSpawnPluginTab))
 		.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "查看角色携带GA"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
+#endif
+	
 }
 
 void FGASAttachEditorModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
-
+#if !UE_SERVER
 	if (FSlateApplication::IsInitialized())
 	{
 		FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(FName(TEXT("GameplayCueApp")));
@@ -63,6 +65,7 @@ void FGASAttachEditorModule::ShutdownModule()
 	FGASAttachEditorCommands::Unregister();
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(GASAttachEditorTabName);
+#endif
 }
 
 TSharedRef<SDockTab> FGASAttachEditorModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)

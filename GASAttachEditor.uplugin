@@ -11,8 +11,9 @@
 	"MarketplaceURL": "",
 	"SupportURL": "",
 	"EngineVersion": "4.26.0",
+	"EnabledByDefault": false,
 	"CanContainContent": false,
-	"Installed": true,
+	"Installed": false,
 	"Modules": [
 		{
 			"Name": "GASAttachEditor",
@@ -20,6 +21,9 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"GameplayAbilities"
+			],
+			"WhitelistPlatforms": [
+				"Win64"
 			]
 		}
 	],
