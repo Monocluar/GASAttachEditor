@@ -45,7 +45,7 @@ TSharedRef< FSlateStyleSet > FGASAttachEditorStyle::Create()
 	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("GASAttachEditorStyle"));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("GASAttachEditor")->GetBaseDir() / TEXT("Resources"));
 
-	Style->Set("GASAttachEditor.OpenPluginWindow", new IMAGE_BRUSH(TEXT("ButtonIcon_40x"), Icon40x40));
+	Style->Set("GASAttachEditor.OpenPluginWindow", new IMAGE_BRUSH(TEXT("ButtonIcon_40x"), Icon16x16));
 
 
 	return Style;

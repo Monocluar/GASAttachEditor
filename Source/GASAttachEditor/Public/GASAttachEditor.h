@@ -31,4 +31,10 @@ private:
 	TSharedPtr<class FUICommandList> PluginCommands;
 
 	TWeakPtr<SDockTab> GameplayCheckEditorTab;
+
+	// <所有Tab控件管理
+	TSharedPtr<FTabManager> GASEditorTabManager;
+
+	// <所有Tab层级管理
+	TSharedPtr<FTabManager::FLayout> GASEditorTabLayout;
 };

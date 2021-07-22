@@ -1,13 +1,13 @@
 #include "SGASAttachEditor.h"
 #include "Widgets/SBoxPanel.h"
-#include "SGASReflectorNodeBase.h"
+#include "GASAttachEditor/SGASReflectorNodeBase.h"
 #include "AbilitySystemComponent.h"
 #include "Engine/Engine.h"
 #include "GameplayAbilitySpec.h"
 #include "../Public/GASAttachEditorStyle.h"
 #include "Widgets/Views/STreeView.h"
-#include "SGASCharacterTagsBase.h"
-#include "SGASAttributesNodeBase.h"
+#include "GASAttachEditor/SGASCharacterTagsBase.h"
+#include "GASAttachEditor/SGASAttributesNodeBase.h"
 #include "Widgets/Layout/SWrapBox.h"
 #include "Widgets/SToolTip.h"
 #include "Widgets/Input/SComboButton.h"
@@ -16,6 +16,8 @@
 #if WITH_EDITOR
 #include "SGameplayTagWidget.h"
 #endif
+#include "Widgets/Docking/SDockTab.h"
+#include "Widgets/Layout/SBorder.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 
@@ -87,7 +89,7 @@ void UpDataPlayerComp(UWorld* World)
 	}
 }
 
-UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info,const UAbilitySystemComponent* InSelectComponent)
+UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info,const UAbilitySystemComponent* InSelectComponent, FName& SelectActorName)
 {
 	// Return target if we already have one
 	if (UAbilitySystemComponent* ASC = Info->LastDebugTarget.Get())
@@ -110,6 +112,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info,const UAbility
 
 		if (InSelectComponent == ASC.Get() && !bIsSelect)
 		{
+			SelectActorName = ASC->GetAvatarActor_Direct()->GetFName();
 			Info->LastDebugTarget = ASC;
 			bIsSelect = true;
 			break;
@@ -118,22 +121,55 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info,const UAbility
 
 	if (!bIsSelect)
 	{
-		if (PlayerComp.IsValidIndex(0))
+		if (!PlayerComp.IsValidIndex(0))
 		{
-			Info->LastDebugTarget = PlayerComp[0];
-		}
-		else
-		{
+			// 刷新世界中的ASComp;
 			UpDataPlayerComp(Info->TargetWorld.Get());
+		}
+
+		// 如果筛选框里面有筛选的名字，则直接用那个名字的角色
+		if (SelectActorName.IsNone())
+		{
 			if (PlayerComp.IsValidIndex(0))
 			{
 				Info->LastDebugTarget = PlayerComp[0];
+				SelectActorName = Info->LastDebugTarget->GetAvatarActor_Direct()->GetFName();
 			}
 			else
 			{
 				Info->LastDebugTarget = nullptr;
 			}
 		}
+		else
+		{
+			bool bIsSelectActorName = false;
+			for (TWeakObjectPtr<UAbilitySystemComponent>& ASC : PlayerComp)
+			{
+				if (!ASC.IsValid()) continue;
+
+				if (ASC->GetAvatarActor_Direct()->GetFName() == SelectActorName)
+				{
+					Info->LastDebugTarget = ASC;
+					bIsSelectActorName = true;
+					break;
+				}
+
+			}
+
+			if (!bIsSelectActorName)
+			{
+				if (PlayerComp.IsValidIndex(0))
+				{
+					Info->LastDebugTarget = PlayerComp[0];
+					SelectActorName = Info->LastDebugTarget->GetAvatarActor_Direct()->GetFName();
+				}
+				else
+				{
+					Info->LastDebugTarget = nullptr;
+				}
+			}
+		}
+
 	}
 
 	return Info->LastDebugTarget.Get();
@@ -153,6 +189,7 @@ public:
 
 public:
 	virtual ~SGASAttachEditorImpl() override;
+
 
 protected:
 	// 当前筛选世界场景
@@ -335,6 +372,8 @@ private:
 	// 选中的角色的GA
 	TWeakObjectPtr<UAbilitySystemComponent> SelectAbilitySystemComponent;
 
+	// 角色筛选框当前选择好的角色
+	FName SelectAbilitySystemComponentForActorName;
 
 	bool bPickingTick;
 
@@ -365,10 +404,36 @@ TSharedRef<SGASAttachEditor> SGASAttachEditor::New()
 	return MakeShareable(new SGASAttachEditorImpl());
 }
 
+FName SGASAttachEditor::GetTabName()
+{
+	return "GAAttachEditorApp";
+}
+
+void SGASAttachEditor::RegisterTabSpawner(FTabManager& TabManager)
+{
+	const auto SpawnCallStackViewTab = [](const FSpawnTabArgs& Args)
+	{
+		return SNew(SDockTab)
+			.TabRole(ETabRole::PanelTab)
+			.Label(LOCTEXT("TabTitle", "游戏中GAS查看器"))
+			[
+				SNew(SBorder)
+				.BorderImage(FEditorStyle::GetBrush("Docking.Tab.ContentAreaBrush"))
+				.BorderBackgroundColor(FSlateColor(FLinearColor(0.2f,0.2f,0.2f,1.f)))
+				[
+					SNew(SGASAttachEditor)
+				]
+			];
+	};
+
+	TabManager.RegisterTabSpawner(SGASAttachEditor::GetTabName(), FOnSpawnTab::CreateStatic(SpawnCallStackViewTab))
+		.SetDisplayName(LOCTEXT("TabTitle", "游戏中GAS查看器"));
+}
+
 void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 {
 	bPickingTick = false;
-
+	SelectAbilitySystemComponentForActorName = FName();
 	SelectAbilitieCategories = Ability;
 
 	ScreenModeState = EScreenGAModeState::Active | EScreenGAModeState::Blocked | EScreenGAModeState::NoActive;
@@ -690,7 +755,7 @@ void SGASAttachEditorImpl::HandleOverrideTypeChange(TWeakObjectPtr<UAbilitySyste
 	}
 
 	SelectAbilitySystemComponent = InComp;
-
+	
 	UpdateGameplayCueListItems();
 }
 
@@ -739,7 +804,7 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 
 	FASCDebugTargetInfo* TargetInfo = GetASCDebugTargetInfo(GetWorld());
 
-	if (UAbilitySystemComponent* ASC = GetDebugTarget(TargetInfo, SelectAbilitySystemComponent.Get()))
+	if (UAbilitySystemComponent* ASC = GetDebugTarget(TargetInfo, SelectAbilitySystemComponent.Get(), SelectAbilitySystemComponentForActorName))
 	{
 		SelectAbilitySystemComponent = ASC;
 
@@ -1122,40 +1187,46 @@ void SGASAttachEditorImpl::RefreshTagList(FName TagsName)
 
 	if (!SelectAbilitySystemComponent.IsValid() || !NewTagContainer || !OldTagContainer) return;
 
-	TArray<FGameplayTag> NewGameplayTagArr;
-	NewTagContainer->GetGameplayTagArray(NewGameplayTagArr);
-
-	// 是否增加
-	for (const FGameplayTag& Item : NewGameplayTagArr)
+	if (NewTagContainer->Num() > OldTagContainer->Num())
 	{
-		if (OldTagContainer->HasTag(Item)) continue;
+		TArray<FGameplayTag> NewGameplayTagArr;
+		NewTagContainer->GetGameplayTagArray(NewGameplayTagArr);
 
-		if (bIsOwnTag)
+		// 是否增加
+		for (const FGameplayTag& Item : NewGameplayTagArr)
 		{
-			SelectAbilitySystemComponent->UpdateTagMap(Item,1);
-		}
-		else
-		{
+			if (OldTagContainer->HasTag(Item)) continue;
 
+			if (bIsOwnTag)
+			{
+				SelectAbilitySystemComponent->AddLooseGameplayTag(Item);
+			}
+			else
+			{
+
+			}
 		}
 	}
-
-	TArray<FGameplayTag> OldGameplayTagArr;
-	OldTagContainer->GetGameplayTagArray(OldGameplayTagArr);
-	// 是否是减少
-	for (const FGameplayTag& Item  : OldGameplayTagArr)
+	else
 	{
-		if(NewTagContainer->HasTag(Item)) continue;
-
-		if (bIsOwnTag)
+		TArray<FGameplayTag> OldGameplayTagArr;
+		OldTagContainer->GetGameplayTagArray(OldGameplayTagArr);
+		// 是否是减少
+		for (const FGameplayTag& Item : OldGameplayTagArr)
 		{
-			SelectAbilitySystemComponent->UpdateTagMap(Item,-1);
-		}
-		else
-		{
+			if (NewTagContainer->HasTag(Item)) continue;
 
+			if (bIsOwnTag)
+			{
+				SelectAbilitySystemComponent->RemoveLooseGameplayTag(Item);
+			}
+			else
+			{
+
+			}
 		}
 	}
+	
 	*OldTagContainer = *NewTagContainer;
 }
 #endif

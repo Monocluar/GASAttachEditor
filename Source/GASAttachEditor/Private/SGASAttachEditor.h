@@ -35,6 +35,11 @@ public:
 
 	// 设置状态改变的东东
 	virtual void SetPickingMode(bool bTick) = 0;
+
+	// 该Tab控件名字
+	static FName GetTabName();
+
+	static void RegisterTabSpawner(FTabManager& TabManager);
 };
 
 #if !UE_SERVER
