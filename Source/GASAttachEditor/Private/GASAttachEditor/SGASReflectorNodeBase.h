@@ -30,6 +30,7 @@ enum EScreenGAModeState
 static FName NAME_AbilitietName(TEXT("AbilitietName"));
 static FName NAME_GAStateType(TEXT("GAStateType"));
 static FName NAME_GAIsActive(TEXT("GAIsActive"));
+static FName NAME_GAAbilityTriggers(TEXT("AbilityTriggers"));
 
 DECLARE_DELEGATE_OneParam(FOnTreeItemVis, bool)
 
@@ -37,7 +38,7 @@ class FGASAbilitieNodeBase
 {
 public:
 
-	virtual ~FGASAbilitieNodeBase(){}
+	virtual ~FGASAbilitieNodeBase(){};
 
 	// 当前GA名字
 	virtual FName GetGAName() const = 0;
@@ -53,6 +54,9 @@ public:
 
 	// 当前技能含有的Tag
 	virtual FText GetAbilitieHasTag() const { return FText(); }
+
+	// 当前GA含有的Triggers
+	virtual FString GetAbilityTriggersName() const = 0;
 
 protected:
 
@@ -195,6 +199,8 @@ private:
 	// 该类型是什么类型东东
 	EGAAbilitieNode GAAbilitieNode;
 
+	FString AbilityTriggersName;
+
 	FString CachedWidgetFile;
 	int32 CachedWidgetLineNumber;
 	FString CachedAssetDataStr;
@@ -205,11 +211,13 @@ private:
 class FGASAbilitieNode : public FGASAbilitieNodeBase
 {
 public:
-	virtual ~FGASAbilitieNode(){}
+	virtual ~FGASAbilitieNode(){};
 
 	static TSharedRef<FGASAbilitieNode> Create(TWeakObjectPtr<UAbilitySystemComponent> InASComponent, FGameplayAbilitySpec InAbilitySpecPtr);
 
 	static TSharedRef<FGASAbilitieNode> Create(TWeakObjectPtr<UAbilitySystemComponent> InASComponent,  FGameplayAbilitySpec InAbilitySpecPtr, TWeakObjectPtr<UGameplayTask> InGameplayTask);
+
+
 
 public:
 	virtual FName GetGAName() const override;
@@ -234,6 +242,8 @@ public:
 
 
 	virtual FString GetWidgetAssetData() const override;
+
+	virtual FString GetAbilityTriggersName() const override;
 
 private:
 	/**

@@ -30,7 +30,7 @@ public:
 	virtual UObject* GetAbilitieAssetObj() const = 0;
 
 	// 当前Tag响应的事件发生器
-	virtual FName GetTriggerSourceName() const = 0;
+	virtual FText GetTriggerSourceName() const = 0;
 
 protected:
 
@@ -65,7 +65,7 @@ protected:
 
 	FName TagName;
 	FName AbilitieAsset;
-	FName TriggerSourceName;
+	FText TriggerSourceName;
 	UObject* LookAssObj;
 };
 
@@ -84,7 +84,7 @@ public:
 	virtual FName GetAbilitieAsset() const override;
 
 	virtual UObject* GetAbilitieAssetObj() const override;
-	virtual FName GetTriggerSourceName() const override;
+	virtual FText GetTriggerSourceName() const override;
 private:
 
 	explicit FGASLookAsset(UObject* AssObj, FAbilityTriggerData ActivationTag);

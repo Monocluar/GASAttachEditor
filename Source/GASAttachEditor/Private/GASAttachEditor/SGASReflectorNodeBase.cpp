@@ -79,8 +79,9 @@ void SGASAbilitieTreeItem::Construct(const FArguments& InArgs, const TSharedRef<
 	CachedWidgetFile = WidgetInfo->GetWidgetFile();
 	CachedWidgetLineNumber = WidgetInfo->GetWidgetLineNumber();
 	CachedAssetDataStr = WidgetInfo->GetWidgetAssetData();
+	AbilityTriggersName = WidgetInfo->GetAbilityTriggersName();
 
-	WidgetInfo->SetTreeItemVis(FOnTreeItemVis::CreateRaw(this, &SGASAbilitieTreeItem::HanldeTreeItemVis));
+	WidgetInfo->SetTreeItemVis(FOnTreeItemVis::CreateSP(this, &SGASAbilitieTreeItem::HanldeTreeItemVis));
 
 	if (!WidgetInfo->IsShow())
 	{
@@ -177,7 +178,22 @@ TSharedRef<SWidget> SGASAbilitieTreeItem::GenerateWidgetForColumn(const FName& C
 				.Justification(ETextJustify::Center)
 			];
 	}
-
+	else if (NAME_GAAbilityTriggers == ColumnName)
+	{
+		return SNew(SBorder)
+			.HAlign(HAlign_Center)
+			.VAlign(VAlign_Center)
+			.Padding(FMargin(2.0f, 0.0f))
+			.Visibility(EVisibility::SelfHitTestInvisible)
+			.BorderBackgroundColor(FSlateColor(FLinearColor(1.f, 1.f, 1.f, 0.f)))
+			.ColorAndOpacity(this, &SGASAbilitieTreeItem::GetTint)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(AbilityTriggersName))
+				.ToolTipText(FText::FromString(AbilityTriggersName))
+				.Justification(ETextJustify::Center)
+			];
+	}
 
 	return SNullWidget::NullWidget;
 }
@@ -213,6 +229,7 @@ void SGASAbilitieTreeItem::HanldeTreeItemVis(bool IsShow)
 {
 	SetVisibility(IsShow ? EVisibility::SelfHitTestInvisible : EVisibility::Collapsed);
 }
+
 
 TSharedRef<FGASAbilitieNode> FGASAbilitieNode::Create(TWeakObjectPtr<UAbilitySystemComponent> InASComponent, FGameplayAbilitySpec InAbilitySpecPtr)
 {
@@ -302,6 +319,30 @@ bool FGASAbilitieNode::GetGAIsActive() const
 	}
 
 	return AbilitySpecPtr.IsActive();
+}
+
+FString FGASAbilitieNode::GetAbilityTriggersName() const
+{
+	FString Str;
+
+	if (!ASComponent.IsValid() || !AbilitySpecPtr.Ability) return Str;
+
+	FArrayProperty* ActiveTagsPtr = FindFProperty<FArrayProperty>(AbilitySpecPtr.Ability->GetClass(), "AbilityTriggers");
+	if (!ActiveTagsPtr) return Str;
+	TArray<FAbilityTriggerData>* ActivationTags = ActiveTagsPtr->ContainerPtrToValuePtr<TArray<FAbilityTriggerData>>(AbilitySpecPtr.Ability);
+
+	for (int32 i = 0; i < ActivationTags->Num(); i++)
+	{
+		const FAbilityTriggerData* Item = &ActivationTags->GetData()[i];
+		Str += FString::Printf(TEXT("Tag: (%s),Event:(%s)"),*Item->TriggerTag.ToString(),*UEnum::GetDisplayValueAsText(Item->TriggerSource).ToString());
+
+		if (i < ActivationTags->Num() - 1)
+		{
+			Str += TEXT("\n");
+		}
+	}
+
+	return Str;
 }
 
 FText FGASAbilitieNode::GetAbilitieHasTag() const

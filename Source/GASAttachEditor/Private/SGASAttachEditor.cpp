@@ -227,6 +227,19 @@ protected:
 	/** 反射树头列表更改时的回调. */
 	void HandleReflectorTreeHiddenColumnsListChanged();
 
+	// GA排序
+	EColumnSortMode::Type GetColumnSortMode(const FName ColumnId) const;
+
+	// 排序更改响应
+	void OnColumnSortModeChanged(const EColumnSortPriority::Type SortPriority, const FName& ColumnId, const EColumnSortMode::Type InSortMode);
+
+	// 更改排序
+	void RequestSort();
+
+private:
+	// GA排序模式
+	EColumnSortMode::Type SortMode;
+
 protected:
 	/** 树视图生成树的回调 */
 	TSharedRef<ITableRow> HandleAttributesWidgetForFilterListView(TSharedRef< FGASAttributesNodeBase > InItem, const TSharedRef<STableViewBase>& OwnerTable);
@@ -437,6 +450,8 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 	SelectAbilitieCategories = Ability;
 
 	ScreenModeState = EScreenGAModeState::Active | EScreenGAModeState::Blocked | EScreenGAModeState::NoActive;
+
+	SortMode = EColumnSortMode::Ascending;
 
 	LoadSettings();
 
@@ -695,6 +710,39 @@ void SGASAttachEditorImpl::HandleReflectorTreeHiddenColumnsListChanged()
 #endif
 }
 
+EColumnSortMode::Type SGASAttachEditorImpl::GetColumnSortMode(const FName ColumnId) const
+{
+	if (NAME_AbilitietName != ColumnId) return EColumnSortMode::None;
+
+	return SortMode;
+}
+
+void SGASAttachEditorImpl::OnColumnSortModeChanged(const EColumnSortPriority::Type SortPriority, const FName& ColumnId, const EColumnSortMode::Type InSortMode)
+{
+	SortMode = InSortMode;
+	RequestSort();
+}
+
+void SGASAttachEditorImpl::RequestSort()
+{
+	if (SortMode == EColumnSortMode::Ascending)
+	{
+		AbilitieFilteredTreeRoot.Sort([](TSharedRef<FGASAbilitieNodeBase> A, TSharedRef<FGASAbilitieNodeBase> B)
+		{
+			return A->GetGAName().ToString() < B->GetGAName().ToString();
+		});
+	}
+	else if (SortMode == EColumnSortMode::Descending)
+	{
+		AbilitieFilteredTreeRoot.Sort([](TSharedRef<FGASAbilitieNodeBase> A, TSharedRef<FGASAbilitieNodeBase> B)
+		{
+			return A->GetGAName().ToString() >= B->GetGAName().ToString();
+		});
+	}
+
+	AbilitieReflectorTree->RequestTreeRefresh();
+}
+
 TSharedRef<ITableRow> SGASAttachEditorImpl::HandleAttributesWidgetForFilterListView(TSharedRef< FGASAttributesNodeBase > InItem, const TSharedRef<STableViewBase>& OwnerTable)
 {
 	return SNew(SGASAttributesTreeItem, OwnerTable)
@@ -866,6 +914,7 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 		// 技能组
 		if (AbilitieReflectorTree.IsValid())
 		{
+
 			for (FGameplayAbilitySpec& AbilitySpec : ASC->GetActivatableAbilities())
 			{
 				if (!AbilitySpec.Ability) continue;
@@ -876,7 +925,9 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 				AbilitieFilteredTreeRoot.Add(NewItem);
 
 			}
-			AbilitieReflectorTree->RequestTreeRefresh();
+
+			RequestSort();
+
 
 		}
 
@@ -1352,19 +1403,26 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityToolWidget()
 					.OnHiddenColumnsListChanged(this, &SGASAttachEditorImpl::HandleReflectorTreeHiddenColumnsListChanged)
 
 					+ SHeaderRow::Column(NAME_AbilitietName)
+					.SortMode(this,&SGASAttachEditorImpl::GetColumnSortMode, NAME_AbilitietName)
+					.OnSort(this, &SGASAttachEditorImpl::OnColumnSortModeChanged)
 					.DefaultLabel(LOCTEXT("AbilitietName", "名称"))
 					.DefaultTooltip(LOCTEXT("AbilitietNameToolTip", "技能名称/任务名称/调试名称"))
-					.FillWidth(0.7f)
+					.FillWidth(0.6f)
 					.ShouldGenerateWidget(true)
 
 					+ SHeaderRow::Column(NAME_GAStateType)
 					.DefaultLabel(LOCTEXT("GAStateType", "当前状态"))
 					.DefaultTooltip(LOCTEXT("GAStateTypeToolTip", "当前状态是否激活，或者是可以被激活但是因为某些原因被拦截"))
-					.FillWidth(0.3f)
+					.FillWidth(0.2f)
 
 					+ SHeaderRow::Column(NAME_GAIsActive)
 					.DefaultLabel(LOCTEXT("GAIsActive", "是否激活"))
-					.FixedWidth(80.0f)
+					.FixedWidth(60.f)
+
+					+ SHeaderRow::Column(NAME_GAAbilityTriggers)
+					.DefaultLabel(LOCTEXT("GAAbilityTriggers", "存在的激活Tag"))
+					.HAlignHeader(EHorizontalAlignment::HAlign_Center)
+					.FillWidth(0.2)
 				)
 			]
 		];

@@ -17,9 +17,9 @@ TSharedRef<FGASLookAsset> FGASLookAsset::Create(UObject* AssObj, FAbilityTrigger
 	return MakeShareable(new FGASLookAsset(AssObj,InActivationTag));
 }
 
-FName FGASLookAsset::GetTriggerSourceName() const
+FText FGASLookAsset::GetTriggerSourceName() const
 {
-	return UEnum::GetValueAsName(ActivationTag.TriggerSource);
+	return UEnum::GetDisplayValueAsText(ActivationTag.TriggerSource);
 }
 
 FName FGASLookAsset::GetTagName() const
@@ -103,7 +103,7 @@ TSharedRef<SWidget> SGASLookAssetTreeItem::GenerateWidgetForColumn(const FName& 
 			.Padding(FMargin(2.0f, 0.0f))
 			[
 				SNew(STextBlock)
-				.Text(FText::FromName(TriggerSourceName))
+				.Text(TriggerSourceName)
 				.Justification(ETextJustify::Center)
 			];
 	}
