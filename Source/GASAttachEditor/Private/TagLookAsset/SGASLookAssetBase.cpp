@@ -90,7 +90,7 @@ TSharedRef<SWidget> SGASLookAssetTreeItem::GenerateWidgetForColumn(const FName& 
 				//.ColorAndOpacity(FLinearColor(1.f,1.f,1.f,0.5f))
 				[
 					SNew(SHyperlink)
-					.Text_Lambda([this]() -> FText { return  FText::FromName(AbilitieAsset); })
+					.Text(FText::FromName(AbilitieAsset))
 					.OnNavigate(this, &SGASLookAssetTreeItem::HandleHyperlinkNavigate)
 				]
 			];

@@ -18,6 +18,7 @@
 #endif
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBorder.h"
+#include "GASAttachEditor/SGASGameplayEffectNodeBase.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 
@@ -181,6 +182,7 @@ class SGASAttachEditorImpl : public SGASAttachEditor
 {
 	typedef STreeView<TSharedRef<FGASAbilitieNodeBase>> SAbilitieTree;
 	typedef STreeView<TSharedRef<FGASAttributesNodeBase>> SAttributesTree;
+	typedef STreeView<TSharedRef<FGASGameplayEffectNodeBase>> SGameplayEffectTree;
 
 public:
 	virtual void Construct(const FArguments& InArgs) override;
@@ -366,6 +368,22 @@ protected:
 	TSharedPtr<SWidget> CreateAttributesToolWidget();
 
 
+protected:
+	// 创建GameplayEffects查看控件
+	TSharedPtr<SWidget> CreateGameplayEffectToolWidget();
+
+	/** 树视图生成树的回调 */
+	TSharedRef<ITableRow> OneGameplayEffecGenerateWidgetForFilterListView(TSharedRef< FGASGameplayEffectNodeBase > InItem, const TSharedRef<STableViewBase>& OwnerTable);
+
+	/** 用于获取给定反射树节点的子项的回调 */
+	void HandleGameplayEffectTreeGetChildren(TSharedRef<FGASGameplayEffectNodeBase> InReflectorNode, TArray<TSharedRef<FGASGameplayEffectNodeBase>>& OutChildren);
+
+	/** 反射树头列表更改时的回调. */
+	void HandleGameplayEffectTreeHiddenColumnsListChanged();
+
+	/** 当反射树中的选择发生更改时的回调 */
+	void HandleGameplayEffectTreeSelectionChanged(TSharedPtr<FGASGameplayEffectNodeBase>, ESelectInfo::Type /*SelectInfo*/);
+
 private:
 
 	// 当前选中状态
@@ -410,6 +428,12 @@ private:
 
 #endif
 
+private:
+	TSharedPtr<SGameplayEffectTree> GameplayEffectTree;
+
+	TArray<TSharedRef<FGASGameplayEffectNodeBase>> GameplayEffectTreeRoot;
+
+	TArray<FString> HiddenGameplayEffectTreeColumns;
 };
 
 TSharedRef<SGASAttachEditor> SGASAttachEditor::New()
@@ -675,8 +699,7 @@ void SGASAttachEditorImpl::HandleReflectorTreeSelectionChanged(TSharedPtr<FGASAb
 TSharedPtr<IToolTip> SGASAttachEditorImpl::GenerateToolTipForReflectorNode(TSharedRef<FGASAbilitieNodeBase> InReflectorNode)
 {
 	return SNew(SToolTip)
-			.Text(this, &SGASAttachEditorImpl::GenerateToolTipForText, InReflectorNode)
-		;
+			.Text(this, &SGASAttachEditorImpl::GenerateToolTipForText, InReflectorNode);
 }
 
 TSharedPtr<SWidget> SGASAttachEditorImpl::HandleReflectorTreeContextMenuPtr()
@@ -753,6 +776,25 @@ void SGASAttachEditorImpl::HandleAttributesTreeGetChildren(TSharedRef<FGASAttrib
 {
 }
 
+FText GetLocalRoleText(ENetRole InRole)
+{
+	FText RoleText;
+	switch (InRole)
+	{
+	case ROLE_Authority:
+		RoleText = LOCTEXT("Authority", "权威");
+		break;
+	case ROLE_AutonomousProxy:
+		RoleText = LOCTEXT("AutonomousProxy", "本地");
+		break;
+	case ROLE_SimulatedProxy:
+		RoleText = LOCTEXT("SimulatedProxy", "模拟");
+		break;
+	}
+
+	return RoleText;
+}
+
 FText GetOverrideTypeDropDownText_Explicit(const TWeakObjectPtr<UAbilitySystemComponent>& InComp)
 {
 	if (!InComp.IsValid())
@@ -767,7 +809,7 @@ FText GetOverrideTypeDropDownText_Explicit(const TWeakObjectPtr<UAbilitySystemCo
 
 	if (LocalOwnerActor)
 	{
-		OutName = FText::Format(FText::FromString(TEXT("{0}[{1}]")), OutName, FText::FromString(LocalOwnerActor->GetName()));
+		OutName = FText::Format(FText::FromString(TEXT("{0}[{2}][{1}]")), OutName, GetLocalRoleText(LocalAvatarActor->GetLocalRole()), FText::FromString(LocalOwnerActor->GetName()));
 	}
 
 	return OutName;
@@ -789,7 +831,7 @@ FText SGASAttachEditorImpl::GetOverrideTypeDropDownText() const
 {
 	if (SelectAbilitySystemComponent.IsValid())
 	{
-		return FText::FromString(SelectAbilitySystemComponent->GetAvatarActor_Direct()->GetName());
+		return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(SelectAbilitySystemComponent->GetAvatarActor_Direct()->GetName()), GetLocalRoleText(SelectAbilitySystemComponent->GetAvatarActor_Direct()->GetLocalRole()));
 	}
 
 	return FText();
@@ -835,20 +877,17 @@ FText SGASAttachEditorImpl::HandleGetPickingModeText() const
 void SGASAttachEditorImpl::SaveSettings()
 {
 	GConfig->SetArray(TEXT("GASAttachEditor"), TEXT("HiddenReflectorTreeColumns"), HiddenReflectorTreeColumns, *GEditorPerProjectIni);
+	GConfig->SetArray(TEXT("GASAttachEditor"), TEXT("HiddenGameplayEffectTreeColumns"), HiddenGameplayEffectTreeColumns, *GEditorPerProjectIni);
 }
 
 void SGASAttachEditorImpl::LoadSettings()
 {
 	GConfig->GetArray(TEXT("WidgetReflector"), TEXT("HiddenReflectorTreeColumns"), HiddenReflectorTreeColumns, *GEditorPerProjectIni);
+	GConfig->SetArray(TEXT("GASAttachEditor"), TEXT("HiddenGameplayEffectTreeColumns"), HiddenGameplayEffectTreeColumns, *GEditorPerProjectIni);
 }
 
 void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 {
-
-	AbilitieFilteredTreeRoot.Reset();
-
-	AttributesFilteredTreeRoot.Reset();
-
 
 	FASCDebugTargetInfo* TargetInfo = GetASCDebugTargetInfo(GetWorld());
 
@@ -857,7 +896,7 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 		SelectAbilitySystemComponent = ASC;
 
 		// 标签组
-		if (FilteredOwnedTagsView.IsValid())
+		if (SelectAbilitieCategories == EDebugAbilitieCategories::Tags && FilteredOwnedTagsView.IsValid())
 		{
 			FGameplayTagContainer OwnerTags;
 			SelectAbilitySystemComponent->GetOwnedGameplayTags(OwnerTags);
@@ -908,12 +947,13 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 			}
 		}
 
-		TArray<FName> LocalDisplayNames;
-		LocalDisplayNames.Add(TargetInfo->DebugCategories[TargetInfo->DebugCategoryIndex]);
+		/*TArray<FName> LocalDisplayNames;
+		LocalDisplayNames.Add(TargetInfo->DebugCategories[TargetInfo->DebugCategoryIndex]);*/
 
 		// 技能组
-		if (AbilitieReflectorTree.IsValid())
+		if (SelectAbilitieCategories == EDebugAbilitieCategories::Ability && AbilitieReflectorTree.IsValid())
 		{
+			AbilitieFilteredTreeRoot.Reset();
 
 			for (FGameplayAbilitySpec& AbilitySpec : ASC->GetActivatableAbilities())
 			{
@@ -932,8 +972,9 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 		}
 
 		// 属性组
-		if (AttributesReflectorTree.IsValid())
+		if (SelectAbilitieCategories == EDebugAbilitieCategories::Attributes &&  AttributesReflectorTree.IsValid())
 		{
+			AttributesFilteredTreeRoot.Reset();
 			for (UAttributeSet* Set : ASC->GetSpawnedAttributes())
 			{
 				if (!Set)
@@ -954,6 +995,24 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 
 		}
 
+		// 游戏效果组
+		if (SelectAbilitieCategories == EDebugAbilitieCategories::GameplayEffects && GameplayEffectTree.IsValid())
+		{
+			GameplayEffectTreeRoot.Reset();
+
+			FProperty* GameplayEffectsPtr = FindFProperty<FProperty>(ASC->GetClass(), "ActiveGameplayEffects");
+
+			if (!GameplayEffectsPtr) return;
+			FActiveGameplayEffectsContainer* ActiveGameplayEffectsPtr = GameplayEffectsPtr->ContainerPtrToValuePtr<FActiveGameplayEffectsContainer>(ASC);
+			if (!ActiveGameplayEffectsPtr) return;
+
+			for (FActiveGameplayEffect& ActiveGE : ActiveGameplayEffectsPtr)
+			{
+				GameplayEffectTreeRoot.Add(FGASGameplayEffectNode::Create(GetWorld(), ActiveGE));
+			}
+
+			GameplayEffectTree->RequestTreeRefresh();
+		}
 	}
 }
 
@@ -1057,12 +1116,7 @@ void SGASAttachEditorImpl::CreateDebugAbilitieCategories(EDebugAbilitieCategorie
 		CategoriesWidget = CreateAttributesToolWidget();
 		break;
 	case EDebugAbilitieCategories::GameplayEffects:
-		CategoriesWidget = SNew(SBox)
-			.HAlign(EHorizontalAlignment::HAlign_Center)
-			.VAlign(EVerticalAlignment::VAlign_Center)
-			[
-				SNew(STextBlock).Text(FText::FromString(TEXT("还没有做，不急")))
-			];
+		CategoriesWidget = CreateGameplayEffectToolWidget();
 		break;
 	case EDebugAbilitieCategories::Ability:
 		CategoriesWidget = CreateAbilityToolWidget();
@@ -1458,6 +1512,95 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAttributesToolWidget()
 
 				)
 			];
+}
+
+TSharedPtr<SWidget> SGASAttachEditorImpl::CreateGameplayEffectToolWidget()
+{
+	TArray<FName> HiddenColumnsList;
+	HiddenColumnsList.Reserve(HiddenGameplayEffectTreeColumns.Num());
+	for (const FString& Item : HiddenGameplayEffectTreeColumns)
+	{
+		HiddenColumnsList.Add(*Item);
+	}
+
+	return SNew(SBorder)
+		.Padding(0.f)
+		[
+			SAssignNew(GameplayEffectTree, SGameplayEffectTree)
+			.ItemHeight(24.f)
+			.TreeItemsSource(&GameplayEffectTreeRoot)
+			.OnGenerateRow(this, &SGASAttachEditorImpl::OneGameplayEffecGenerateWidgetForFilterListView)
+			.OnGetChildren(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeGetChildren)
+			.OnSelectionChanged(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeSelectionChanged)
+			.HighlightParentNodesForSelection(true)
+			.HeaderRow
+			(
+				SNew(SHeaderRow)
+				.CanSelectGeneratedColumn(true)
+				.HiddenColumnsList(HiddenColumnsList)
+				.OnHiddenColumnsListChanged(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeHiddenColumnsListChanged)
+
+				+ SHeaderRow::Column(NAME_GAGameplayEffectName)
+				.DefaultLabel(LOCTEXT("GAGameplayEffectName", "名称"))
+				.HAlignHeader(EHorizontalAlignment::HAlign_Center)
+				.DefaultTooltip(LOCTEXT("GAGameplayEffectToolTip", "GE名称 / 加成属性"))
+				.FillWidth(0.2f)
+
+				+ SHeaderRow::Column(NAME_GAGameplayEffectDuration)
+				.DefaultLabel(LOCTEXT("GAGameplayEffectDuration", "时间"))
+				.HAlignHeader(EHorizontalAlignment::HAlign_Center)
+				.DefaultTooltip(LOCTEXT("GAGameplayEffectDurationToolTip", "GE时间详细叙述"))
+				.FillWidth(0.4f)
+
+				+ SHeaderRow::Column(NAME_GAGameplayEffectStack)
+				.HAlignHeader(EHorizontalAlignment::HAlign_Center)
+				.DefaultLabel(LOCTEXT("GAGameplayEffectStack", "堆栈信息"))
+				.FillWidth(0.1f)
+
+				+ SHeaderRow::Column(NAME_GAGameplayEffectLevel)
+				.HAlignHeader(EHorizontalAlignment::HAlign_Center)
+				.DefaultLabel(LOCTEXT("GAGameplayEffectLevel", "等级"))
+				.FillWidth(0.1f)
+
+				+ SHeaderRow::Column(NAME_GAGameplayEffectGrantedTags)
+				.HAlignHeader(EHorizontalAlignment::HAlign_Center)
+				.DefaultLabel(LOCTEXT("GAGameplayEffectGrantedTags", "标签"))
+				.DefaultTooltip(LOCTEXT("GAGameplayEffectToolTip", "含有的所有标签"))
+				.FillWidth(0.2f)
+			)
+		];
+}
+
+TSharedRef<ITableRow> SGASAttachEditorImpl::OneGameplayEffecGenerateWidgetForFilterListView(TSharedRef< FGASGameplayEffectNodeBase > InItem, const TSharedRef<STableViewBase>& OwnerTable)
+{
+	return SNew(SGASGameplayEffectTreeItem, OwnerTable)
+		.WidgetInfoToVisualize(InItem);
+}
+
+void SGASAttachEditorImpl::HandleGameplayEffectTreeGetChildren(TSharedRef<FGASGameplayEffectNodeBase> InReflectorNode, TArray<TSharedRef<FGASGameplayEffectNodeBase>>& OutChildren)
+{
+	OutChildren = InReflectorNode->GetChildNodes();
+}
+
+void SGASAttachEditorImpl::HandleGameplayEffectTreeHiddenColumnsListChanged()
+{
+#if WITH_EDITOR
+	if (GameplayEffectTree && GameplayEffectTree->GetHeaderRow())
+	{
+		const TArray<FName> HiddenColumnIds = GameplayEffectTree->GetHeaderRow()->GetHiddenColumnIds();
+		HiddenGameplayEffectTreeColumns.Reset(HiddenColumnIds.Num());
+		for (const FName Id : HiddenColumnIds)
+		{
+			HiddenGameplayEffectTreeColumns.Add(Id.ToString());
+		}
+		SaveSettings();
+	}
+#endif
+}
+
+void SGASAttachEditorImpl::HandleGameplayEffectTreeSelectionChanged(TSharedPtr<FGASGameplayEffectNodeBase>, ESelectInfo::Type /*SelectInfo*/)
+{
+
 }
 
 FAttachInputProcessor::FAttachInputProcessor(SGASAttachEditor* InWidgetPtr)
