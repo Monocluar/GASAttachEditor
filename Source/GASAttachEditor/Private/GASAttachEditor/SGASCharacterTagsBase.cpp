@@ -1,6 +1,9 @@
 #include "SGASCharacterTagsBase.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "GameplayTagsManager.h"
+#include "Widgets/Input/SButton.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Widgets/Views/STileView.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 

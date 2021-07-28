@@ -4,9 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
+#include "Framework/Docking/TabManager.h"
+
 
 class FToolBarBuilder;
 class FMenuBuilder;
+class SWidget;
+class SDockTab;
 
 class FGASAttachEditorModule : public IModuleInterface
 {

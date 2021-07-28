@@ -5,6 +5,9 @@
 #include "Widgets/SUserWidget.h"
 #include "Framework/Application/IInputProcessor.h"
 
+class SWidget;
+class FTabManager;
+
 enum EDebugAbilitieCategories
 {
 	// 标签
@@ -40,9 +43,9 @@ public:
 	static FName GetTabName();
 
 	static void RegisterTabSpawner(FTabManager& TabManager);
+
 };
 
-#if !UE_SERVER
 class FAttachInputProcessor : public IInputProcessor
 {
 public:
@@ -58,4 +61,3 @@ private:
 private:
 	SGASAttachEditor* GASAttachEditorWidgetPtr;
 };
-#endif

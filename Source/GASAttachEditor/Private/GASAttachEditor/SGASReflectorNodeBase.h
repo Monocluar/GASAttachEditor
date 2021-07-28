@@ -3,6 +3,9 @@
 #include "CoreMinimal.h"
 #include "GameplayAbilitySpec.h"
 #include "GameplayTask.h"
+#include "Widgets/Views/STableRow.h"
+
+class STableViewBase;
 
 enum EGAAbilitieNode
 {

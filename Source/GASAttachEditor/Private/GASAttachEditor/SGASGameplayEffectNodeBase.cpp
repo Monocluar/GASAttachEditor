@@ -1,6 +1,8 @@
 #include "SGASGameplayEffectNodeBase.h"
 #include "AbilitySystemComponent.h"
 #include "AttributeSet.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 

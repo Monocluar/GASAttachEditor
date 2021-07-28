@@ -1,11 +1,19 @@
 #include "SGASTagLookAsset.h"
+
+#if WITH_EDITOR
 #include "SGameplayTagWidget.h"
+#include "GameplayTagContainer.h"
+#endif
+
 #include "Widgets/Layout/SWrapBox.h"
 #include "TagLookAsset/SGASLookAssetBase.h"
 #include "Layout/Children.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Abilities/GameplayAbility.h"
 #include "UObject/UObjectGlobals.h"
+
+#include "Framework/Docking/TabManager.h"
+#include "AssetRegistry/AssetData.h"
 
 #define LOCTEXT_NAMESPACE "FGASAttachEditorModule"
 
@@ -19,11 +27,12 @@ protected:
 	// 右键添加或者删除Tag
 #if WITH_EDITOR
 	FReply OnMouseButtonUpTags(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent);
-#endif
+
 	// <Tag控件选择
 	void RefreshTagList();
 
 	void OnDelTag(FGameplayTag Item);
+#endif
 
 	/** 树视图生成树的回调 */
 	TSharedRef<ITableRow> HandleAttributesWidgetForFilterListView(TSharedRef< FGASLookAssetBase > InItem, const TSharedRef<STableViewBase>& OwnerTable);
@@ -32,7 +41,7 @@ protected:
 
 	void FillLookTagAsset();
 
-	void SetGraphRootIdentifiers(const TArray<FAssetIdentifier>& NewGraphRootIdentifiers, const FReferenceViewerParams& ReferenceViewerParams);
+	void SetGraphRootIdentifiers(const TArray<FAssetIdentifier>& NewGraphRootIdentifiers);
 
 
 private:
@@ -126,9 +135,11 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 			]
 		];
 
+#if WITH_EDITOR
 	EditableContainers.Empty();
 	TagContainer.Reset();
 	EditableContainers.Add(SGameplayTagWidget::FEditableGameplayTagContainerDatum(nullptr,&TagContainer));
+#endif
 }
 
 #if WITH_EDITOR
@@ -147,8 +158,6 @@ FReply SGASTagLookAssetImpl::OnMouseButtonUpTags(const FGeometry& MyGeometry, co
 	}
 	return FReply::Handled();
 }
-
-#endif
 
 void SGASTagLookAssetImpl::RefreshTagList()
 {
@@ -217,6 +226,7 @@ void SGASTagLookAssetImpl::OnDelTag(FGameplayTag Item)
 
 	FillLookTagAsset();
 }
+#endif
 
 TSharedRef<ITableRow> SGASTagLookAssetImpl::HandleAttributesWidgetForFilterListView(TSharedRef< FGASLookAssetBase > InItem, const TSharedRef<STableViewBase>& OwnerTable)
 {
@@ -232,7 +242,10 @@ void SGASTagLookAssetImpl::HandleAttributesTreeGetChildren(TSharedRef<FGASLookAs
 void SGASTagLookAssetImpl::FillLookTagAsset()
 {
 	TArray<FGameplayTag> NewGameplayTagArr;
+
+#if WITH_EDITOR
 	TagContainer.GetGameplayTagArray(NewGameplayTagArr);
+#endif
 
 	TArray<FAssetIdentifier> AssetIdentifiers;
 
@@ -241,11 +254,11 @@ void SGASTagLookAssetImpl::FillLookTagAsset()
 		AssetIdentifiers.Add(FAssetIdentifier(FGameplayTag::StaticStruct(), Item.GetTagName()));
 	}
 
-	SetGraphRootIdentifiers(AssetIdentifiers,FReferenceViewerParams());
+	SetGraphRootIdentifiers(AssetIdentifiers);
 }
 
 
-void SGASTagLookAssetImpl::SetGraphRootIdentifiers(const TArray<FAssetIdentifier>& NewGraphRootIdentifiers, const FReferenceViewerParams& ReferenceViewerParams)
+void SGASTagLookAssetImpl::SetGraphRootIdentifiers(const TArray<FAssetIdentifier>& NewGraphRootIdentifiers)
 {
 	LookGAAssetTreeRoot.Reset();
 #if WITH_EDITOR
@@ -329,7 +342,7 @@ FName SGASTagLookAsset::GetTabName()
 {
 	return "GASTagLookAssetApp";
 }
-
+#if	WITH_EDITOR
 void SGASTagLookAsset::RegisterTabSpawner(FTabManager& TabManager)
 {
 	const auto SpawnCallStackViewTab = [](const FSpawnTabArgs& Args)
@@ -350,5 +363,5 @@ void SGASTagLookAsset::RegisterTabSpawner(FTabManager& TabManager)
 	TabManager.RegisterTabSpawner(SGASTagLookAsset::GetTabName(), FOnSpawnTab::CreateStatic(SpawnCallStackViewTab))
 		.SetDisplayName(LOCTEXT("TabTitle", "Tag调用GA查询器"));
 }
-
+#endif
 #undef LOCTEXT_NAMESPACE

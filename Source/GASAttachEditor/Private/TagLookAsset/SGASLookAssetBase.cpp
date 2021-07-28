@@ -1,9 +1,14 @@
 #include "TagLookAsset/SGASLookAssetBase.h"
 #include "AbilitySystemComponent.h"
 #include "Widgets/Input/SButton.h"
+#if WITH_EDITOR
 #include "EditorFontGlyphs.h"
+#include "EditorStyleSet.h"
+#endif
 #include "GameplayTagsManager.h"
 #include "Widgets/Input/SHyperlink.h"
+#include "Widgets/Text/STextBlock.h"
+#include "Widgets/Layout/SBox.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 
@@ -144,13 +149,19 @@ void SGASTagViewItem::Construct(const FArguments& InArgs)
 				
 					SNew(SButton)
 					.ContentPadding(FMargin(0))
+#if WITH_EDITOR
 					.ButtonStyle(FEditorStyle::Get(), "FlatButton.Danger")
+#endif
 					.ForegroundColor(FSlateColor::UseForeground())
 					.OnClicked(this, &SGASTagViewItem::OnRemoveTagClicked)
 					[
 						SNew(STextBlock)
+#if WITH_EDITOR
 						.Font(FEditorStyle::Get().GetFontStyle("FontAwesome.9"))
 						.Text(FEditorFontGlyphs::Times)
+#else
+						.Text(FText::FromString("x"))
+#endif
 					]
 			
 				]

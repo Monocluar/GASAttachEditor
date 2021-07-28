@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayEffect.h"
+#include "Widgets/Views/STableRow.h"
 
 
 static FName NAME_GAGameplayEffectName(TEXT("GameplayEffectName"));

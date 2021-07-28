@@ -8,6 +8,10 @@
 #include "Editor/EditorEngine.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #endif
+#include "Widgets/SBoxPanel.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/Text/STextBlock.h"
+#include "Widgets/Views/STableViewBase.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 

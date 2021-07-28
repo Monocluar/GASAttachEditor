@@ -4,6 +4,7 @@
 #include "AttributeSet.h"
 #include "GameplayTagContainer.h"
 #include "Abilities/GameplayAbility.h"
+#include "Widgets/Views/STableRow.h"
 
 
 static FName NAME_TagName(TEXT("TagName"));

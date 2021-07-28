@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Widgets/SUserWidget.h"
 
+class FTabManager;
+
 class SGASTagLookAsset : public SUserWidget
 {
 public:
@@ -17,6 +19,7 @@ public:
 
 	// 该Tab控件名字
 	static FName GetTabName();
-
+#if	WITH_EDITOR
 	static void RegisterTabSpawner(FTabManager& TabManager);
+#endif
 };

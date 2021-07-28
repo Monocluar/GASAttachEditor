@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
+#include "Widgets/Views/STableRow.h"
 
 
 static FName NAME_AttributesName(TEXT("AttributesName"));

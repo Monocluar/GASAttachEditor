@@ -7,13 +7,23 @@
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
-#if WITH_EDITOR
-#include "ToolMenus.h"
-#endif
 #include "SGASAttachEditor.h"
+#if WITH_EDITOR
 #include "SGASTagLookAsset.h"
 #include "WorkspaceMenuStructureModule.h"
 #include "WorkspaceMenuStructure.h"
+#include "ToolMenus.h"
+#endif
+#include "Framework/Commands/UICommandList.h"
+#include "Templates/SharedPointer.h"
+#include "Framework/Docking/LayoutService.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Framework/Application/MenuStack.h"
+#include "Widgets/Layout/SBorder.h"
+#if WITH_EDITOR
+#include "EditorStyleSet.h"
+#endif
+#include "Framework/MultiBox/MultiBoxBuilder.h"
 
 static const FName GASAttachEditorTabName("GASAttachEditor");
 
@@ -28,13 +38,15 @@ void FGASAttachEditorModule::StartupModule()
 	FGASAttachEditorCommands::Register();
 
 	PluginCommands = MakeShareable(new FUICommandList);
-
 #if WITH_EDITOR
 	const IWorkspaceMenuStructure& MenuStructure =  WorkspaceMenu::GetMenuStructure();
+#endif
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(GASAttachEditorTabName, FOnSpawnTab::CreateRaw(this, &FGASAttachEditorModule::OnSpawnPluginTab))
 		.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "查看角色携带GA"))
 		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "打开“查看角色携带GA”选项卡"))
+#if WITH_EDITOR
 		.SetGroup(MenuStructure.GetDeveloperToolsDebugCategory())
+#endif
 		.SetIcon(FSlateIcon(FGASAttachEditorStyle::GetStyleSetName(), "GASAttachEditor.OpenPluginWindow"));
 
 	/*UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FGASAttachEditorModule::RegisterMenus));
@@ -43,7 +55,7 @@ void FGASAttachEditorModule::StartupModule()
 		.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "查看角色携带GA"))
 		//.SetMenuType(ETabSpawnerMenuType::Hidden)
 		.SetIcon(FSlateIcon(FGASAttachEditorStyle::GetStyleSetName(), "GASAttachEditor.OpenPluginWindow"));;*/
-#endif
+
 	
 }
 
@@ -101,7 +113,9 @@ TSharedRef<SDockTab> FGASAttachEditorModule::OnSpawnPluginTab(const FSpawnTabArg
 	TWeakPtr<FTabManager> GASEditorTabManagerWeak = GASEditorTabManager;
 
 	const FName GAAttachEditorName = SGASAttachEditor::GetTabName();
+#if WITH_EDITOR
 	const FName GASTagLookAssetName = SGASTagLookAsset::GetTabName();
+#endif
 
 	NomadTab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateStatic(
 		[](TSharedRef<SDockTab> Self, TWeakPtr<FTabManager> TabManager)
@@ -120,7 +134,10 @@ TSharedRef<SDockTab> FGASAttachEditorModule::OnSpawnPluginTab(const FSpawnTabArg
 	{
 
 		SGASAttachEditor::RegisterTabSpawner(*GASEditorTabManager);
+
+#if WITH_EDITOR
 		SGASTagLookAsset::RegisterTabSpawner(*GASEditorTabManager);
+#endif
 
 		GASEditorTabLayout = FTabManager::NewLayout("Standalone_GASAttachEditor_Layout_v1")
 			->AddArea
@@ -133,7 +150,9 @@ TSharedRef<SDockTab> FGASAttachEditorModule::OnSpawnPluginTab(const FSpawnTabArg
 					->SetSizeCoefficient(.4f)
 					->SetHideTabWell(true)
 					->AddTab(GAAttachEditorName, ETabState::OpenedTab)
+#if WITH_EDITOR
 					->AddTab(GASTagLookAssetName, ETabState::OpenedTab)
+#endif
 					->SetForegroundTab(GAAttachEditorName)
 				)
 			);
@@ -190,6 +209,7 @@ TSharedRef<SDockTab> FGASAttachEditorModule::OnSpawnPluginTab(const FSpawnTabArg
 		)
 	);
 
+#if WITH_EDITOR
 	PluginCommands->MapAction(
 		FGASAttachEditorCommands::Get().ShowGASTagLookAssetViewer,
 		FExecuteAction::CreateStatic(
@@ -206,6 +226,7 @@ TSharedRef<SDockTab> FGASAttachEditorModule::OnSpawnPluginTab(const FSpawnTabArg
 			GASTagLookAssetName
 		)
 	);
+#endif
 
 	TWeakPtr<SWidget> OwningWidgetWeak = NomadTab;
 	TabContents->SetOnMouseButtonUp(
@@ -229,7 +250,9 @@ TSharedRef<SDockTab> FGASAttachEditorModule::OnSpawnPluginTab(const FSpawnTabArg
 				MenuBuilder.PushCommandList(InCommandList.ToSharedRef());
 				{
 					MenuBuilder.AddMenuEntry(FGASAttachEditorCommands::Get().ShowGASAttachEditorViewer);
+#if WITH_EDITOR
 					MenuBuilder.AddMenuEntry(FGASAttachEditorCommands::Get().ShowGASTagLookAssetViewer);
+#endif
 				}
 				MenuBuilder.PopCommandList();
 
@@ -250,7 +273,9 @@ TSharedRef<SDockTab> FGASAttachEditorModule::OnSpawnPluginTab(const FSpawnTabArg
 
 	NomadTab->SetContent(
 		SNew(SBorder)
+#if WITH_EDITOR
 		.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+#endif
 		.Padding(FMargin(0.f, 2.f))
 		[
 			TabContents

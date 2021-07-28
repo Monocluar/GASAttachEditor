@@ -15,10 +15,17 @@
 #include "GameplayTagsManager.h"
 #if WITH_EDITOR
 #include "SGameplayTagWidget.h"
+#include "EditorStyleSet.h"
 #endif
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBorder.h"
 #include "GASAttachEditor/SGASGameplayEffectNodeBase.h"
+#include "Misc/ConfigCacheIni.h"
+#include "Widgets/SWidget.h"
+#include "Framework/Docking/TabManager.h"
+#include "Widgets/Input/SCheckBox.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Framework/Commands/UIAction.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 
@@ -90,12 +97,12 @@ void UpDataPlayerComp(UWorld* World)
 	}
 }
 
-UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info,const UAbilitySystemComponent* InSelectComponent, FName& SelectActorName)
+UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilitySystemComponent* InSelectComponent, FName& SelectActorName)
 {
 	// Return target if we already have one
 	if (UAbilitySystemComponent* ASC = Info->LastDebugTarget.Get())
 	{
-		if ( ASC == InSelectComponent)
+		if (ASC == InSelectComponent)
 		{
 			return ASC;
 		}
@@ -104,7 +111,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info,const UAbility
 	// Find one
 	bool bIsSelect = false;
 
-	for (TWeakObjectPtr<UAbilitySystemComponent>& ASC :PlayerComp)
+	for (TWeakObjectPtr<UAbilitySystemComponent>& ASC : PlayerComp)
 	{
 		if (!ASC.IsValid())
 		{
@@ -159,10 +166,10 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info,const UAbility
 
 			if (!bIsSelectActorName)
 			{
-				if (PlayerComp.IsValidIndex(0))
+				if (PlayerComp.IsValidIndex(0) && PlayerComp[0] != nullptr)
 				{
 					Info->LastDebugTarget = PlayerComp[0];
-					SelectActorName = Info->LastDebugTarget->GetAvatarActor_Direct()->GetFName();
+					SelectActorName = PlayerComp[0]->GetAvatarActor_Direct()->GetFName();
 				}
 				else
 				{
@@ -173,10 +180,13 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info,const UAbility
 
 	}
 
-	return Info->LastDebugTarget.Get();
-}
+	if (Info->LastDebugTarget.IsValid())
+	{
+		return Info->LastDebugTarget.Get();
+	}
 
-#if !UE_SERVER
+	return nullptr;
+}
 
 class SGASAttachEditorImpl : public SGASAttachEditor
 {
@@ -333,7 +343,6 @@ protected:
 	TSharedPtr<SWidget> CreateAbilityTagWidget();
 
 protected:
-
 	// 按键监听
 	void OnApplicationPreInputKeyDownListener(const FKeyEvent& InKeyEvent);
 
@@ -455,7 +464,9 @@ void SGASAttachEditor::RegisterTabSpawner(FTabManager& TabManager)
 			.Label(LOCTEXT("TabTitle", "游戏中GAS查看器"))
 			[
 				SNew(SBorder)
+#if WITH_EDITOR
 				.BorderImage(FEditorStyle::GetBrush("Docking.Tab.ContentAreaBrush"))
+#endif
 				.BorderBackgroundColor(FSlateColor(FLinearColor(0.2f,0.2f,0.2f,1.f)))
 				[
 					SNew(SGASAttachEditor)
@@ -882,8 +893,8 @@ void SGASAttachEditorImpl::SaveSettings()
 
 void SGASAttachEditorImpl::LoadSettings()
 {
-	GConfig->GetArray(TEXT("WidgetReflector"), TEXT("HiddenReflectorTreeColumns"), HiddenReflectorTreeColumns, *GEditorPerProjectIni);
-	GConfig->SetArray(TEXT("GASAttachEditor"), TEXT("HiddenGameplayEffectTreeColumns"), HiddenGameplayEffectTreeColumns, *GEditorPerProjectIni);
+	GConfig->GetArray(TEXT("GASAttachEditor"), TEXT("HiddenReflectorTreeColumns"), HiddenReflectorTreeColumns, *GEditorPerProjectIni);
+	GConfig->GetArray(TEXT("GASAttachEditor"), TEXT("HiddenGameplayEffectTreeColumns"), HiddenGameplayEffectTreeColumns, *GEditorPerProjectIni);
 }
 
 void SGASAttachEditorImpl::UpdateGameplayCueListItems()
@@ -1618,5 +1629,4 @@ bool FAttachInputProcessor::HandleKeyDownEvent(FSlateApplication& SlateApp, cons
 	return false;
 }
 
-#endif
 #undef LOCTEXT_NAMESPACE

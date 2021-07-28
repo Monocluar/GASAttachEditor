@@ -63,10 +63,9 @@ public class GASAttachEditor : ModuleRules
             {
                 "UnrealEd",
                 "EditorStyle",
-				"ToolMenus",
 				"GameplayTagsEditor",
-				"WorkspaceMenuStructure"
-
+				"WorkspaceMenuStructure",
+				"ToolMenus",
 			}
             );
         }

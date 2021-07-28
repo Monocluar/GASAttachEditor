@@ -20,6 +20,9 @@ public:
 
 public:
 	TSharedPtr< FUICommandInfo > ShowGASAttachEditorViewer;
+
+#if WITH_EDITOR
 	TSharedPtr< FUICommandInfo > ShowGASTagLookAssetViewer;
+#endif
 
 };
