@@ -23,7 +23,8 @@
 				"GameplayAbilities"
 			],
 			"WhitelistPlatforms": [
-				"Win64"
+				"Win64",
+				"Win32"
 			]
 		}
 	],
