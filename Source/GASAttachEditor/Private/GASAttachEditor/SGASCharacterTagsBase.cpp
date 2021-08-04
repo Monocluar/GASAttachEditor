@@ -67,6 +67,7 @@ FText FGASCharacterTags::GetTagTipName() const
 	if (UGameplayTagsManager::Get().GetTagEditorData(*GameplayTag.ToString(),OutComment,OutTagSource,bOutIsTagExplicit,bOutIsRestrictedTag,bOutAllowNonRestrictedChildren))
 	{
 		// <Tag命名为止
+		// Tag name
 		if (bOutIsTagExplicit)
 		{
 			Str += FString::Printf(TEXT("(%s)"), *OutTagSource.ToString());;
@@ -76,6 +77,7 @@ FText FGASCharacterTags::GetTagTipName() const
 			Str += TEXT("Implicit");
 		}
 		// 是否有注释
+		// Are there any comments
 		if (!OutComment.IsEmpty())
 		{
 			Str += FString::Printf(TEXT("\n\n%s"),*OutComment);

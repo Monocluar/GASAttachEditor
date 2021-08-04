@@ -11,7 +11,7 @@ class FGASAttachEditorCommands : public TCommands<FGASAttachEditorCommands>
 public:
 
 	FGASAttachEditorCommands()
-		: TCommands<FGASAttachEditorCommands>(TEXT("GASAttachEditor"), NSLOCTEXT("Contexts", "GASAttachEditor", "查看角色携带GA插件"), NAME_None, FGASAttachEditorStyle::GetStyleSetName())
+		: TCommands<FGASAttachEditorCommands>(TEXT("GASAttachEditor"), NSLOCTEXT("Contexts", "GASAttachEditor", /*"查看角色携带GA插件"*/"View GA Plugins Carried By Roles"), NAME_None, FGASAttachEditorStyle::GetStyleSetName())
 	{
 	}
 

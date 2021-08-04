@@ -3,7 +3,10 @@
 #include "CoreMinimal.h"
 #include "GameplayAbilitySpec.h"
 #include "GameplayTask.h"
+#include "Widgets/Views/STableViewBase.h"
 #include "Widgets/Views/STableRow.h"
+#include "Widgets/Views/SListView.h"
+
 
 class STableViewBase;
 
@@ -53,12 +56,15 @@ public:
 	virtual bool GetGAIsActive() const = 0;
 
 	// 该类型是什么类型东东
+	// Determine what the type is
 	virtual EGAAbilitieNode GetNodeType() const;
 
 	// 当前技能含有的Tag
+	// Tag contained in current skill
 	virtual FText GetAbilitieHasTag() const { return FText(); }
 
 	// 当前GA含有的Triggers
+	// Triggers contained in current GA
 	virtual FString GetAbilityTriggersName() const = 0;
 
 protected:
@@ -66,63 +72,66 @@ protected:
 	FGASAbilitieNodeBase();
 
 public:
-	// GA C++位置
+	// GA 控件资源位置
+	// GA location Path
 	virtual FString GetWidgetFile() const = 0;
 
 	// GA C++ Line 位置
 	virtual int32 GetWidgetLineNumber() const = 0;
 
 	// 是否是蓝图资源
+	// Is it a blueprint resource
 	virtual bool HasValidWidgetAssetData() const = 0;
 
 	// 蓝图资源位置
+	// Blueprint resource location
 	virtual FString GetWidgetAssetData() const = 0;
 
 public:
 
 	// 获取状态颜色
+	// Get status color
 	const FLinearColor& GetTint() const;
 
 	// 设置状态颜色
+	// Set status color
 	void SetTint(const FLinearColor& InTint);
 	
 	// 将给定节点添加到此小部件的子级列表中（此节点将保留对实例的强引用）
+	// Adds the given node to the list of children of this widget (this node will retain a strong reference to the instance)
 	void AddChildNode(TSharedRef<FGASAbilitieNodeBase> InChildNode);
 
 	// 返回子条目的数组
+	// Returns an array of subentries
 	const TArray<TSharedRef<FGASAbilitieNodeBase>>& GetChildNodes() const;
 
 	// 设置回调句柄
+	// Set callback handle
 	void SetTreeItemVis(FOnTreeItemVis Handle);
 
 	// 设置自身显隠性
+	// Set self visibility
 	void SetItemVisility(bool bShow);
 
 	// 获取显隠性
+	// Get visility
 	FORCEINLINE bool IsShow() const;
 
 
 protected:
 
-	/** 子级列表 */
 	TArray<TSharedRef<FGASAbilitieNodeBase>> ChildNodes;
 
-	// 状态颜色
 	FLinearColor Tint;
 
-	// 显示句柄
 	FOnTreeItemVis OnShowHandle;
 
-	// 显隠性
 	bool bIsShow;
 
-	// 该类型是什么类型东东
 	EGAAbilitieNode GAAbilitieNode;
 
 public:
 	EScreenGAModeState ScreenGAMode;
-
-
 
 };
 
@@ -187,19 +196,14 @@ protected:
 	}
 
 private:
-	/** 关于我们正在可视化的小部件的信息 */
 	TSharedPtr<FGASAbilitieNodeBase> WidgetInfo;
 
-	// 当前GA名字
 	FName GAName;
 
-	// GA状态
 	FText GAStateType;
 
-	// 是否激活
 	bool bGAIsActive;
 
-	// 该类型是什么类型东东
 	EGAAbilitieNode GAAbilitieNode;
 
 	FString AbilityTriggersName;

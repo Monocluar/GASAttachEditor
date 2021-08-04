@@ -37,8 +37,10 @@ private:
 	TWeakPtr<SDockTab> GameplayCheckEditorTab;
 
 	// <所有Tab控件管理
+	// Manage all tab controls
 	TSharedPtr<FTabManager> GASEditorTabManager;
 
 	// <所有Tab层级管理
+	// All tab level management
 	TSharedPtr<FTabManager::FLayout> GASEditorTabLayout;
 };

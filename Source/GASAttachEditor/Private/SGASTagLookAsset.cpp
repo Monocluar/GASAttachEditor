@@ -14,6 +14,9 @@
 
 #include "Framework/Docking/TabManager.h"
 #include "AssetRegistry/AssetData.h"
+#include "Widgets/Views/STreeView.h"
+#include "Templates/SharedPointer.h"
+#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FGASAttachEditorModule"
 
@@ -25,10 +28,12 @@ public:
 
 protected:
 	// 右键添加或者删除Tag
+	// Right click to add or delete tag
 #if WITH_EDITOR
 	FReply OnMouseButtonUpTags(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent);
 
 	// <Tag控件选择
+	// Tag control selection
 	void RefreshTagList();
 
 	void OnDelTag(FGameplayTag Item);
@@ -47,18 +52,24 @@ protected:
 private:
 #if WITH_EDITOR
 	// 当前拥有的Tag
+	// Currently owned tag
 	TArray<SGameplayTagWidget::FEditableGameplayTagContainerDatum> EditableContainers;
 	// 筛选的tag
+	// Filtered tag
 	FGameplayTagContainer TagContainer;
 	FGameplayTagContainer OldTagContainer;
 #endif
 
 	// 筛选标签组控件
+	// Filter label group controls
 	TSharedPtr<SWrapBox> FilteredOwnedTagsView;
 
 	// 树状控件
+	// Tree Controls
 	TSharedPtr<SLookAssetTree> LookGAAssetTree;
+
 	// 树状控件根部
+	// Tree control root
 	TArray<TSharedRef<FGASLookAssetBase>> LookGAAssetTreeRoot;
 
 };
@@ -82,7 +93,8 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 				.Padding(2.f)
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("AbilityTriggersEvent", "调用GA事件的Tags"))
+					//.Text(LOCTEXT("AbilityTriggersEvent", "调用GA事件的Tags"))
+					.Text(LOCTEXT("AbilityTriggersEvent", "Tags Calling GA Event"))
 				]
 				+ SVerticalBox::Slot()
 				.FillHeight(1.f)
@@ -119,16 +131,19 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 						.CanSelectGeneratedColumn(true)
 
 						+ SHeaderRow::Column(NAME_TagName)
-						.DefaultLabel(LOCTEXT("TagName", "标签名称"))
+						//.DefaultLabel(LOCTEXT("TagName", "标签名称"))
+						.DefaultLabel(LOCTEXT("TagName", "TagName"))
 						.FillWidth(0.3f)
 						.ShouldGenerateWidget(true)
 
 						+ SHeaderRow::Column(NAME_AbilitieAsset)
-						.DefaultLabel(LOCTEXT("AbilitieAsset", "资源"))
+						//.DefaultLabel(LOCTEXT("AbilitieAsset", "资源"))
+						.DefaultLabel(LOCTEXT("AbilitieAsset", "AbilitieAsset"))
 						.FillWidth(0.5f)
 
 						+ SHeaderRow::Column(NAME_TriggerSource)
-						.DefaultLabel(LOCTEXT("TriggerSource", "响应类型"))
+						//.DefaultLabel(LOCTEXT("TriggerSource", "响应类型"))
+						.DefaultLabel(LOCTEXT("TriggerSource", "TriggerSource"))
 						.FillWidth(0.2f)
 					)
 				]
@@ -166,6 +181,7 @@ void SGASTagLookAssetImpl::RefreshTagList()
 		TArray<FGameplayTag> NewGameplayTagArr;
 		TagContainer.GetGameplayTagArray(NewGameplayTagArr);
 		// 是否增加
+		// Is it a Add
 		for (const FGameplayTag& Item : NewGameplayTagArr)
 		{
 			if (OldTagContainer.HasTag(Item)) continue;
@@ -183,6 +199,7 @@ void SGASTagLookAssetImpl::RefreshTagList()
 		TArray<FGameplayTag> OldGameplayTagArr;
 		OldTagContainer.GetGameplayTagArray(OldGameplayTagArr);
 		// 是否是减少
+		// Is it a Reduction
 		for (const FGameplayTag& Item : OldGameplayTagArr)
 		{
 			if(TagContainer.HasTag(Item)) continue;
@@ -228,9 +245,9 @@ void SGASTagLookAssetImpl::OnDelTag(FGameplayTag Item)
 }
 #endif
 
-TSharedRef<ITableRow> SGASTagLookAssetImpl::HandleAttributesWidgetForFilterListView(TSharedRef< FGASLookAssetBase > InItem, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SGASTagLookAssetImpl::HandleAttributesWidgetForFilterListView(TSharedRef< FGASLookAssetBase > InItem, const TSharedRef<STableViewBase>& InOwnerTable)
 {
-	return SNew(SGASLookAssetTreeItem,OwnerTable)
+	return SNew(SGASLookAssetTreeItem, InOwnerTable)
 		.WidgetInfoToVisualize(InItem);
 }
 
@@ -349,7 +366,8 @@ void SGASTagLookAsset::RegisterTabSpawner(FTabManager& TabManager)
 	{
 		return SNew(SDockTab)
 			.TabRole(ETabRole::PanelTab)
-			.Label(LOCTEXT("TabTitle", "Tag调用GA查询器"))
+			//.Label(LOCTEXT("TabTitle", "Tag调用GA查询器"))
+			.Label(LOCTEXT("TabTitle", "Tag Calls GA Query"))
 			[
 				SNew(SBorder)
 				.BorderImage(FEditorStyle::GetBrush("Docking.Tab.ContentAreaBrush"))
@@ -361,7 +379,8 @@ void SGASTagLookAsset::RegisterTabSpawner(FTabManager& TabManager)
 	};
 
 	TabManager.RegisterTabSpawner(SGASTagLookAsset::GetTabName(), FOnSpawnTab::CreateStatic(SpawnCallStackViewTab))
-		.SetDisplayName(LOCTEXT("TabTitle", "Tag调用GA查询器"));
+		//.SetDisplayName(LOCTEXT("TabTitle", "Tag调用GA查询器"));
+		.SetDisplayName(LOCTEXT("TabTitle", "Tag Calls GA Query"));
 }
 #endif
 #undef LOCTEXT_NAMESPACE

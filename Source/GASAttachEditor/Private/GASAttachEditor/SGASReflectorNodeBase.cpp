@@ -223,6 +223,7 @@ void SGASAbilitieTreeItem::HandleHyperlinkNavigate()
 	{
 		UObject* AssObj = AssetData.GetAsset();
 		// 打开资源编辑器
+		// Open the resource editor
 		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(AssObj);
 	}
 #endif
@@ -282,13 +283,15 @@ FText FGASAbilitieNode::GetGAStateType()
 	}
 	if (AbilitySpecPtr.IsActive())
 	{
-		OutType = FText::Format(FText::FromString(TEXT("{0}:{1}")),LOCTEXT("ActiveIndex", "激活数"),AbilitySpecPtr.ActiveCount);
+		//CN: OutType = FText::Format(FText::FromString(TEXT("{0}:{1}")),LOCTEXT("ActiveIndex", "激活数"), AbilitySpecPtr.ActiveCount);
+		OutType = FText::Format(FText::FromString(TEXT("{0}:{1}")),LOCTEXT("ActiveIndex", "Active Index"), AbilitySpecPtr.ActiveCount);
 		Tint = FLinearColor::White;
 		ScreenGAMode = Active;
 	}
 	else if (ASComponent->IsAbilityInputBlocked(AbilitySpecPtr.InputID))
 	{
-		OutType = LOCTEXT("InputBlocked", "输入阻止");
+		//CN: OutType = LOCTEXT("InputBlocked", "输入阻止");
+		OutType = LOCTEXT("InputBlocked", "InputBlocked");
 		Tint = FLinearColor::Red;
 		ScreenGAMode = Blocked;
 	}
@@ -296,17 +299,20 @@ FText FGASAbilitieNode::GetGAStateType()
 	{
 		FGameplayTagContainer BlockedAbility;
 		ASComponent->GetBlockedAbilityTags(BlockedAbility);
-		OutType = LOCTEXT("TagBlocked", "有阻止的Tag");
+		//CN: OutType = LOCTEXT("TagBlocked", "有阻止的Tag");
+		OutType = LOCTEXT("TagBlocked", "Blocked Tags");
 		Tint = FLinearColor::Red;
 		ScreenGAMode = Blocked;
 	}
 	else if (AbilitySpecPtr.Ability->CanActivateAbility(AbilitySpecPtr.Handle, ASComponent->AbilityActorInfo.Get(), nullptr, nullptr, &FailureTags) == false)
 	{
-		OutType = LOCTEXT("CantActivate","被阻止激活");
+		//CN: OutType = LOCTEXT("CantActivate","被阻止激活");
+		OutType = LOCTEXT("CantActivate","Cant Activate");
 		float Cooldown =  AbilitySpecPtr.Ability->GetCooldownTimeRemaining(ASComponent->AbilityActorInfo.Get());
 		if (Cooldown > 0.f)
 		{
-			OutType = FText::Format(FText::FromString(TEXT("{0},{1}:{2}s")),OutType ,LOCTEXT("Cooldown", "CD时间未完"),Cooldown);
+			//CN: OutType = FText::Format(FText::FromString(TEXT("{0},{1}:{2}s")),OutType ,LOCTEXT("Cooldown", "CD时间未完"),Cooldown);
+			OutType = FText::Format(FText::FromString(TEXT("{0},{1}:{2}s")),OutType ,LOCTEXT("Cooldown", "Cooldown Time"), Cooldown);
 		}
 		Tint = FLinearColor::Red;
 		ScreenGAMode = Blocked;
@@ -441,7 +447,7 @@ void FGASAbilitieNode::CreateChild()
 		if (!Instance) continue;
 
 		// 因为Instance->ActiveTasks在protected里面，也没有其Get方法，好在他是UPROPERTY带UE4反射的结构体
-
+		// Because instance - > activetasks is in protected, there is no get method. Fortunately, it is a structure with upproperty and UE4 reflection
 		FArrayProperty* ActiveTasksPtr = FindFProperty<FArrayProperty>(Instance->GetClass(),"ActiveTasks");
 
 		if (!ActiveTasksPtr) continue;

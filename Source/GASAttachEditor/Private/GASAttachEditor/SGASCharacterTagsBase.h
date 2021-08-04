@@ -14,9 +14,11 @@ public:
 	virtual ~FGASCharacterTagsBase(){}
 
 	// 获取自身Tag名字
+	// Get own tag name
 	virtual FText GetTagName() const = 0;
 
 	// 获取Tag注释名称
+	// Get tag comment name
 	virtual FText GetTagTipName() const = 0;
 
 protected:

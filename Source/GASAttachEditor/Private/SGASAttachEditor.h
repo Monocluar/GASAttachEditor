@@ -37,9 +37,11 @@ public:
 	virtual void Construct(const FArguments& InArgs) = 0;
 
 	// 设置状态改变的东东
+	// Set the status change
 	virtual void SetPickingMode(bool bTick) = 0;
 
 	// 该Tab控件名字
+	// The tab control name
 	static FName GetTabName();
 
 	static void RegisterTabSpawner(FTabManager& TabManager);

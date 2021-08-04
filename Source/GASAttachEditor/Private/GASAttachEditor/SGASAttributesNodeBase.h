@@ -2,7 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
+#include "Widgets/Views/STableViewBase.h"
 #include "Widgets/Views/STableRow.h"
+#include "Widgets/Views/SListView.h"
+
 
 
 static FName NAME_AttributesName(TEXT("AttributesName"));
@@ -19,9 +22,11 @@ public:
 public:
 
 	// 当前GA名字
+	// Current GA name
 	virtual FName GetGAName() const = 0;
 
 	// 当前属性值
+	// Current attribute value
 	virtual float GetNumericAttribute() const = 0;
 
 protected:
@@ -50,6 +55,7 @@ public:
 
 protected:
 	/** 关于我们正在可视化的小部件的信息 */
+	/** Information about the widget we are visualizing */
 	TSharedPtr<FGASAttributesNodeBase> WidgetInfo;
 
 	FName GAName;

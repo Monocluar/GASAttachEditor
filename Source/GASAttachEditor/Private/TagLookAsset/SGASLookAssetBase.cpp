@@ -192,6 +192,7 @@ FText SGASTagViewItem::OnTipTag() const
 	if (UGameplayTagsManager::Get().GetTagEditorData(*TagName.Get().ToString(), OutComment, OutTagSource, bOutIsTagExplicit, bOutIsRestrictedTag, bOutAllowNonRestrictedChildren))
 	{
 		// 是否有注释
+		// Are there any comments
 		if (!OutComment.IsEmpty())
 		{
 			return FText::FromString(OutComment);

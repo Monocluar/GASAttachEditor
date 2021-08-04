@@ -2,8 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "GameplayEffect.h"
+#include "Widgets/Views/STableViewBase.h"
 #include "Widgets/Views/STableRow.h"
-
+#include "Widgets/Views/SListView.h"
 
 static FName NAME_GAGameplayEffectName(TEXT("GameplayEffectName"));
 static FName NAME_GAGameplayEffectDuration(TEXT("GameplayEffectDuration"));

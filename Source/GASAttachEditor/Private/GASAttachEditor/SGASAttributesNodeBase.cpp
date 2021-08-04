@@ -58,7 +58,7 @@ TSharedRef<SWidget> SGASAttributesTreeItem::GenerateWidgetForColumn(const FName&
 			.Padding(FMargin(2.0f, 0.0f))
 			[
 				SNew(STextBlock)
-				.Text_Lambda([this]() -> FText { return FText::FromName(GAName); })
+				.Text(FText::FromName(GAName))
 				.Justification(ETextJustify::Center)
 			];
 	}
@@ -70,7 +70,7 @@ TSharedRef<SWidget> SGASAttributesTreeItem::GenerateWidgetForColumn(const FName&
 			.Padding(FMargin(2.0f, 0.0f))
 			[
 				SNew(STextBlock)
-				.Text_Lambda([this]() -> FText { return  FText::AsNumber(NumericAttribute); })
+				.Text(FText::AsNumber(NumericAttribute))
 				.Justification(ETextJustify::Center)
 			];
 	}

@@ -17,7 +17,7 @@ public:
 public:
 	virtual void Construct(const FArguments& InArgs) = 0;
 
-	// 该Tab控件名字
+	// The tab control name
 	static FName GetTabName();
 #if	WITH_EDITOR
 	static void RegisterTabSpawner(FTabManager& TabManager);

@@ -42,21 +42,15 @@ void FGASAttachEditorModule::StartupModule()
 	const IWorkspaceMenuStructure& MenuStructure =  WorkspaceMenu::GetMenuStructure();
 #endif
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(GASAttachEditorTabName, FOnSpawnTab::CreateRaw(this, &FGASAttachEditorModule::OnSpawnPluginTab))
-		.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "查看角色携带GA"))
-		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "打开“查看角色携带GA”选项卡"))
+		/*.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "查看角色携带GA"))
+		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "打开“查看角色携带GA”选项卡"))*/
+		.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "View GA Carried By Role"))
+		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "Open 'View GA Carried By Role' TAb"))
 #if WITH_EDITOR
 		.SetGroup(MenuStructure.GetDeveloperToolsDebugCategory())
 #endif
 		.SetIcon(FSlateIcon(FGASAttachEditorStyle::GetStyleSetName(), "GASAttachEditor.OpenPluginWindow"));
 
-	/*UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FGASAttachEditorModule::RegisterMenus));
-
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(GASAttachEditorTabName, FOnSpawnTab::CreateRaw(this, &FGASAttachEditorModule::OnSpawnPluginTab))
-		.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "查看角色携带GA"))
-		//.SetMenuType(ETabSpawnerMenuType::Hidden)
-		.SetIcon(FSlateIcon(FGASAttachEditorStyle::GetStyleSetName(), "GASAttachEditor.OpenPluginWindow"));;*/
-
-	
 }
 
 void FGASAttachEditorModule::ShutdownModule()
@@ -303,7 +297,8 @@ static void GASAttachEditorShow(UWorld* InWorld)
 
 FAutoConsoleCommandWithWorld AbilitySystemEditoeDebugNextCategoryCmd(
 	TEXT("GASAttachEditorShow"),
-	TEXT("打开查看角色GA的编辑器"),
+	//TEXT("打开查看角色GA的编辑器"),
+	TEXT("Open the editor for viewing character GA"),
 	FConsoleCommandWithWorldDelegate::CreateStatic(GASAttachEditorShow)
 );
 
