@@ -550,7 +550,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 						SNew(STextBlock)
 						//.ToolTipText(LOCTEXT("ShowWorldTypeType", "选择需要查看场景"))
 						.ToolTipText(LOCTEXT("ShowWorldTypeType", "Select World Scene"))
-						.Text(SelectWorldSceneText)
+						.Text_Lambda([=]{return SelectWorldSceneText;})
 					]
 				]
 
