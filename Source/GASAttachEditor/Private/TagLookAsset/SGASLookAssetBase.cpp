@@ -1,3 +1,5 @@
+// <Copyright (C) Monocluar. 2021. All Rights Reserved.
+
 #include "TagLookAsset/SGASLookAssetBase.h"
 #include "AbilitySystemComponent.h"
 #include "Widgets/Input/SButton.h"

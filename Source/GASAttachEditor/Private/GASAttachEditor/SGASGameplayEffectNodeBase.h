@@ -1,3 +1,5 @@
+// <Copyright (C) Monocluar. 2021. All Rights Reserved.
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -108,6 +110,10 @@ public:
 	virtual FText GetPredictedText() const override;
 
 	virtual FName GetGrantedTagsName() const override;
+
+protected:
+
+	FORCEINLINE FString CleanupName(FString Str) const;
 
 private:
 

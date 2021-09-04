@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// <Copyright (C) Monocluar. 2021. All Rights Reserved.
 
 #include "GASAttachEditor.h"
 #include "GASAttachEditorStyle.h"
@@ -42,10 +42,8 @@ void FGASAttachEditorModule::StartupModule()
 	const IWorkspaceMenuStructure& MenuStructure =  WorkspaceMenu::GetMenuStructure();
 #endif
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(GASAttachEditorTabName, FOnSpawnTab::CreateRaw(this, &FGASAttachEditorModule::OnSpawnPluginTab))
-		/*.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "查看角色携带GA"))
-		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "打开“查看角色携带GA”选项卡"))*/
-		.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "View GA Carried By Role"))
-		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "Open 'View GA Carried By Role' TAb"))
+		.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "DebugAbilitySystemViewer"))
+		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "Open 'DebugAbilitySystemViewer' TAb"))
 #if WITH_EDITOR
 		.SetGroup(MenuStructure.GetDeveloperToolsDebugCategory())
 #endif
@@ -171,7 +169,7 @@ TSharedRef<SDockTab> FGASAttachEditorModule::OnSpawnPluginTab(const FSpawnTabArg
 			}
 			else
 			{
-				InDebuggingToolsManager->TryInvokeTab(InTabName);
+				InDebuggingToolsManager->InvokeTab(InTabName);
 			}
 		}
 	};
@@ -292,19 +290,18 @@ TSharedPtr<SWidget> FGASAttachEditorModule::CreateGASCheckTool()
 
 static void GASAttachEditorShow(UWorld* InWorld)
 {
-	FGlobalTabmanager::Get()->TryInvokeTab(GASAttachEditorTabName);
+	FGlobalTabmanager::Get()->InvokeTab(GASAttachEditorTabName);
 }
 
 FAutoConsoleCommandWithWorld AbilitySystemEditoeDebugNextCategoryCmd(
 	TEXT("GASAttachEditorShow"),
-	//TEXT("打开查看角色GA的编辑器"),
 	TEXT("Open the editor for viewing character GA"),
 	FConsoleCommandWithWorldDelegate::CreateStatic(GASAttachEditorShow)
 );
 
 void FGASAttachEditorModule::PluginButtonClicked()
 {
-	FGlobalTabmanager::Get()->TryInvokeTab(GASAttachEditorTabName);
+	FGlobalTabmanager::Get()->InvokeTab(GASAttachEditorTabName);
 }
 
 void FGASAttachEditorModule::RegisterMenus()

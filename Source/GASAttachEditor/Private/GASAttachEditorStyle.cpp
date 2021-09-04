@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// <Copyright (C) Monocluar. 2021. All Rights Reserved.
 
 #include "GASAttachEditorStyle.h"
 #include "Styling/SlateStyleRegistry.h"

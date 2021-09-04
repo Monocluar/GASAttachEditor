@@ -1,19 +1,21 @@
+// <Copyright (C) Monocluar. 2021. All Rights Reserved.
+
 #include "SGASTagLookAsset.h"
 
 #if WITH_EDITOR
-#include "SGameplayTagWidget.h"
+//#include "SGameplayTagWidget.h"
 #include "GameplayTagContainer.h"
 #endif
 
 #include "Widgets/Layout/SWrapBox.h"
 #include "TagLookAsset/SGASLookAssetBase.h"
 #include "Layout/Children.h"
-#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetRegistryModule.h"
 #include "Abilities/GameplayAbility.h"
 #include "UObject/UObjectGlobals.h"
 
 #include "Framework/Docking/TabManager.h"
-#include "AssetRegistry/AssetData.h"
+#include "AssetData.h"
 #include "Widgets/Views/STreeView.h"
 #include "Templates/SharedPointer.h"
 #include "Widgets/Text/STextBlock.h"
@@ -50,6 +52,7 @@ protected:
 
 
 private:
+/*
 #if WITH_EDITOR
 	// 当前拥有的Tag
 	// Currently owned tag
@@ -58,7 +61,7 @@ private:
 	// Filtered tag
 	FGameplayTagContainer TagContainer;
 	FGameplayTagContainer OldTagContainer;
-#endif
+#endif*/
 
 	// 筛选标签组控件
 	// Filter label group controls
@@ -93,8 +96,7 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 				.Padding(2.f)
 				[
 					SNew(STextBlock)
-					//.Text(LOCTEXT("AbilityTriggersEvent", "调用GA事件的Tags"))
-					.Text(LOCTEXT("AbilityTriggersEvent", "Tags Calling GA Event"))
+					.Text(LOCTEXT("AbilityTriggersEvent", "Event Trigger Tags"))
 				]
 				+ SVerticalBox::Slot()
 				.FillHeight(1.f)
@@ -106,8 +108,8 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 #endif
 					[
 						SAssignNew(FilteredOwnedTagsView, SWrapBox)
-						.Orientation(EOrientation::Orient_Horizontal)
-						.UseAllottedSize(true)
+						//.Orientation(EOrientation::Orient_Horizontal)
+						//.UseAllottedSize(true)
 						.InnerSlotPadding(FVector2D(5.f))
 					]
 				]
@@ -128,33 +130,31 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 					.HeaderRow
 					(
 						SNew(SHeaderRow)
-						.CanSelectGeneratedColumn(true)
+						//.CanSelectGeneratedColumn(true)
 
 						+ SHeaderRow::Column(NAME_TagName)
-						//.DefaultLabel(LOCTEXT("TagName", "标签名称"))
-						.DefaultLabel(LOCTEXT("TagName", "TagName"))
+						.DefaultLabel(LOCTEXT("TagName", "Trigger Tag"))
 						.FillWidth(0.3f)
 						.ShouldGenerateWidget(true)
 
 						+ SHeaderRow::Column(NAME_AbilitieAsset)
-						//.DefaultLabel(LOCTEXT("AbilitieAsset", "资源"))
-						.DefaultLabel(LOCTEXT("AbilitieAsset", "AbilitieAsset"))
+						.DefaultLabel(LOCTEXT("AbilitieAsset", "Ability Asset"))
 						.FillWidth(0.5f)
 
 						+ SHeaderRow::Column(NAME_TriggerSource)
-						//.DefaultLabel(LOCTEXT("TriggerSource", "响应类型"))
-						.DefaultLabel(LOCTEXT("TriggerSource", "TriggerSource"))
+						.DefaultLabel(LOCTEXT("TriggerSource", "Trigger Source"))
 						.FillWidth(0.2f)
 					)
 				]
 			]
 		];
 
+/*
 #if WITH_EDITOR
 	EditableContainers.Empty();
 	TagContainer.Reset();
 	EditableContainers.Add(SGameplayTagWidget::FEditableGameplayTagContainerDatum(nullptr,&TagContainer));
-#endif
+#endif*/
 }
 
 #if WITH_EDITOR
@@ -162,21 +162,21 @@ FReply SGASTagLookAssetImpl::OnMouseButtonUpTags(const FGeometry& MyGeometry, co
 {
 	if (MouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
 	{
-		TSharedPtr<SGameplayTagWidget> TagWidget =
+		/*TSharedPtr<SGameplayTagWidget> TagWidget =
 			SNew(SGameplayTagWidget,  EditableContainers)
 			.GameplayTagUIMode(EGameplayTagUIMode::SelectionMode)
 			.ReadOnly(false)
 			.OnTagChanged(this, &SGASTagLookAssetImpl::RefreshTagList);
 
 		FWidgetPath WidgetPath = MouseEvent.GetEventPath() != nullptr ? *MouseEvent.GetEventPath() : FWidgetPath();
-		FSlateApplication::Get().PushMenu(AsShared(), WidgetPath, TagWidget.ToSharedRef(), MouseEvent.GetScreenSpacePosition(), FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));
+		FSlateApplication::Get().PushMenu(AsShared(), WidgetPath, TagWidget.ToSharedRef(), MouseEvent.GetScreenSpacePosition(), FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));*/
 	}
 	return FReply::Handled();
 }
 
 void SGASTagLookAssetImpl::RefreshTagList()
 {
-	if (TagContainer.Num() > OldTagContainer.Num())
+	/*if (TagContainer.Num() > OldTagContainer.Num())
 	{
 		TArray<FGameplayTag> NewGameplayTagArr;
 		TagContainer.GetGameplayTagArray(NewGameplayTagArr);
@@ -219,12 +219,12 @@ void SGASTagLookAssetImpl::RefreshTagList()
 	
 	OldTagContainer = TagContainer;
 
-	FillLookTagAsset();
+	FillLookTagAsset();*/
 }
 
 void SGASTagLookAssetImpl::OnDelTag(FGameplayTag Item)
 {
-	if (!TagContainer.HasTag(Item)) return;
+	//if (!TagContainer.HasTag(Item)) return;
 
 	TPanelChildren<SWrapBox::FSlot>* ViewSlots = static_cast<TPanelChildren<SWrapBox::FSlot>*>(FilteredOwnedTagsView->GetChildren());
 
@@ -237,9 +237,9 @@ void SGASTagLookAssetImpl::OnDelTag(FGameplayTag Item)
 		}
 	}
 
-	TagContainer.RemoveTag(Item);
+	//TagContainer.RemoveTag(Item);
 
-	OldTagContainer = TagContainer;
+	//OldTagContainer = TagContainer;
 
 	FillLookTagAsset();
 }
@@ -260,9 +260,10 @@ void SGASTagLookAssetImpl::FillLookTagAsset()
 {
 	TArray<FGameplayTag> NewGameplayTagArr;
 
+/*
 #if WITH_EDITOR
 	TagContainer.GetGameplayTagArray(NewGameplayTagArr);
-#endif
+#endif*/
 
 	TArray<FAssetIdentifier> AssetIdentifiers;
 
@@ -279,12 +280,13 @@ void SGASTagLookAssetImpl::SetGraphRootIdentifiers(const TArray<FAssetIdentifier
 {
 	LookGAAssetTreeRoot.Reset();
 #if WITH_EDITOR
-	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
+	/*IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
 
 	TArray<FAssetDependency> LinksToAsset;
 	for (const FAssetIdentifier& AssetId : NewGraphRootIdentifiers)
 	{
 		AssetRegistry.GetReferencers(AssetId, LinksToAsset, UE::AssetRegistry::EDependencyCategory::SearchableName, UE::AssetRegistry::EDependencyQuery::NoRequirements);
+		//AssetRegistry.GetReferencers(AssetId, LinksToAsset, UE::AssetRegistry::EDependencyCategory::All, UE::AssetRegistry::EDependencyQuery::NoRequirements);
 	}
 	for (FAssetDependency& Asset : LinksToAsset)
 	{
@@ -308,11 +310,11 @@ void SGASTagLookAssetImpl::SetGraphRootIdentifiers(const TArray<FAssetIdentifier
 			//TSubclassOf<UGameplayAbility> GAAssClass = TSubclassOf<UGameplayAbility>(GAAssBlue->GeneratedClass);
 
 			GAAssObj = Cast<UGameplayAbility>(GAAssBlue->GeneratedClass->GetDefaultObject());
-			/*FSoftClassPath ClassPath(GAAssBlue->GeneratedClass.Get()->GetPathName());
+			/ *FSoftClassPath ClassPath(GAAssBlue->GeneratedClass.Get()->GetPathName());
 			if (UClass* Class = ClassPath.TryLoadClass<UGameplayAbility>())
 			{
 				GAAssObj = NewObject<UGameplayAbility>(Class, NAME_None, RF_Transactional);
-			}*/
+			}* /
 
 			if (!GAAssObj)	continue;
 		}
@@ -344,7 +346,7 @@ void SGASTagLookAssetImpl::SetGraphRootIdentifiers(const TArray<FAssetIdentifier
 			return A->GetTagName().GetStringLength() == B->GetTagName().GetStringLength();
 		}
 		return true;
-	});
+	});*/
 
 #endif
 	LookGAAssetTree->RequestTreeRefresh();
@@ -366,8 +368,7 @@ void SGASTagLookAsset::RegisterTabSpawner(FTabManager& TabManager)
 	{
 		return SNew(SDockTab)
 			.TabRole(ETabRole::PanelTab)
-			//.Label(LOCTEXT("TabTitle", "Tag调用GA查询器"))
-			.Label(LOCTEXT("TabTitle", "Tag Calls GA Query"))
+			.Label(LOCTEXT("TabTitle", "Query Ability Triggers"))
 			[
 				SNew(SBorder)
 				.BorderImage(FEditorStyle::GetBrush("Docking.Tab.ContentAreaBrush"))
@@ -379,8 +380,7 @@ void SGASTagLookAsset::RegisterTabSpawner(FTabManager& TabManager)
 	};
 
 	TabManager.RegisterTabSpawner(SGASTagLookAsset::GetTabName(), FOnSpawnTab::CreateStatic(SpawnCallStackViewTab))
-		//.SetDisplayName(LOCTEXT("TabTitle", "Tag调用GA查询器"));
-		.SetDisplayName(LOCTEXT("TabTitle", "Tag Calls GA Query"));
+		.SetDisplayName(LOCTEXT("TabTitle", "Query Ability Triggers"));
 }
 #endif
 #undef LOCTEXT_NAMESPACE

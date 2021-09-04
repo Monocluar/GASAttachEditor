@@ -1,3 +1,5 @@
+// <Copyright (C) Monocluar. 2021. All Rights Reserved.
+
 #include "SGASAttributesNodeBase.h"
 #include "AbilitySystemComponent.h"
 #include "Widgets/Text/STextBlock.h"

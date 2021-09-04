@@ -1,3 +1,5 @@
+// <Copyright (C) Monocluar. 2021. All Rights Reserved.
+
 #include "SGASReflectorNodeBase.h"
 #include "SlateOptMacros.h"
 #include "Widgets/Input/SHyperlink.h"
@@ -6,7 +8,7 @@
 
 #if WITH_EDITOR
 #include "Editor/EditorEngine.h"
-#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetRegistryModule.h"
 #endif
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Layout/SBorder.h"
@@ -283,14 +285,12 @@ FText FGASAbilitieNode::GetGAStateType()
 	}
 	if (AbilitySpecPtr.IsActive())
 	{
-		//CN: OutType = FText::Format(FText::FromString(TEXT("{0}:{1}")),LOCTEXT("ActiveIndex", "激活数"), AbilitySpecPtr.ActiveCount);
-		OutType = FText::Format(FText::FromString(TEXT("{0}:{1}")),LOCTEXT("ActiveIndex", "Active Index"), AbilitySpecPtr.ActiveCount);
+		OutType = FText::Format(FText::FromString(TEXT("{0}:{1}")),LOCTEXT("ActiveIndex", "Active"), AbilitySpecPtr.ActiveCount);
 		Tint = FLinearColor::White;
 		ScreenGAMode = Active;
 	}
 	else if (ASComponent->IsAbilityInputBlocked(AbilitySpecPtr.InputID))
 	{
-		//CN: OutType = LOCTEXT("InputBlocked", "输入阻止");
 		OutType = LOCTEXT("InputBlocked", "InputBlocked");
 		Tint = FLinearColor::Red;
 		ScreenGAMode = Blocked;
@@ -299,20 +299,17 @@ FText FGASAbilitieNode::GetGAStateType()
 	{
 		FGameplayTagContainer BlockedAbility;
 		ASComponent->GetBlockedAbilityTags(BlockedAbility);
-		//CN: OutType = LOCTEXT("TagBlocked", "有阻止的Tag");
-		OutType = LOCTEXT("TagBlocked", "Blocked Tags");
+		OutType = LOCTEXT("TagBlocked", "TagBlocked");
 		Tint = FLinearColor::Red;
 		ScreenGAMode = Blocked;
 	}
 	else if (AbilitySpecPtr.Ability->CanActivateAbility(AbilitySpecPtr.Handle, ASComponent->AbilityActorInfo.Get(), nullptr, nullptr, &FailureTags) == false)
 	{
-		//CN: OutType = LOCTEXT("CantActivate","被阻止激活");
-		OutType = LOCTEXT("CantActivate","Cant Activate");
+		OutType = LOCTEXT("CantActivate","CantActivate");
 		float Cooldown =  AbilitySpecPtr.Ability->GetCooldownTimeRemaining(ASComponent->AbilityActorInfo.Get());
 		if (Cooldown > 0.f)
 		{
-			//CN: OutType = FText::Format(FText::FromString(TEXT("{0},{1}:{2}s")),OutType ,LOCTEXT("Cooldown", "CD时间未完"),Cooldown);
-			OutType = FText::Format(FText::FromString(TEXT("{0},{1}:{2}s")),OutType ,LOCTEXT("Cooldown", "Cooldown Time"), Cooldown);
+			OutType = FText::Format(FText::FromString(TEXT("{0},{1}:{2}s")),OutType ,LOCTEXT("Cooldown", "Cooldown"), Cooldown);
 		}
 		Tint = FLinearColor::Red;
 		ScreenGAMode = Blocked;

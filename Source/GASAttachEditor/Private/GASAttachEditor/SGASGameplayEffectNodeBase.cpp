@@ -1,3 +1,5 @@
+// <Copyright (C) Monocluar. 2021. All Rights Reserved.
+
 #include "SGASGameplayEffectNodeBase.h"
 #include "AbilitySystemComponent.h"
 #include "AttributeSet.h"
@@ -24,19 +26,20 @@ FText FGASGameplayEffectNode::GetDurationText() const
 		{
 			UEnum* e = StaticEnum<EGameplayModOp::Type>();
 			FString ModifierOpStr = e->GetNameStringByValue(ModInfo->ModifierOp);
-			DurationText = FText::Format(LOCTEXT("GameplayEffectMod", "改变方式: {0}, 改变数值: {1}"), FText::FromString(ModifierOpStr),ModSpec->GetEvaluatedMagnitude());
+			DurationText = FText::Format(LOCTEXT("GameplayEffectMod", "Mod: {0}, Value: {1}"), FText::FromString(ModifierOpStr), ModSpec->GetEvaluatedMagnitude());
 		}
 
 		return DurationText;
 	}
 
-	DurationText = LOCTEXT("GameplayEffectInfiniteDurationText", "无限期");
+	DurationText = LOCTEXT("GameplayEffectInfiniteDurationText", "Infinite Duration");
 
 	FNumberFormattingOptions NumberFormatOptions;
 	NumberFormatOptions.MaximumFractionalDigits = 2;
 	if (GameplayEffect.GetDuration() > 0.f)
 	{
-		DurationText = FText::Format(LOCTEXT("GameplayEffectDurationStr", "持续时间: {0},剩余时间: {1} (开始时间: {2} / {3} / {4})"), 
+		DurationText = 
+			FText::Format(LOCTEXT("GameplayEffectDurationStr", "Duration: {0},Remaining: {1} (Start: {2} / {3} / {4})"), 
 			FText::AsNumber(GameplayEffect.GetDuration(), &NumberFormatOptions),
 			FText::AsNumber(GameplayEffect.GetTimeRemaining(World->GetTimeSeconds()), &NumberFormatOptions),
 			FText::AsNumber(GameplayEffect.StartServerWorldTime, &NumberFormatOptions),
@@ -46,7 +49,7 @@ FText FGASGameplayEffectNode::GetDurationText() const
 
 	if (GameplayEffect.GetPeriod() > 0.f)
 	{
-		DurationText = FText::Format(LOCTEXT("GameplayEffectPeriod","{0} 周期: {1}"), DurationText, FText::AsNumber(GameplayEffect.GetPeriod(), &NumberFormatOptions));
+		DurationText = FText::Format(LOCTEXT("GameplayEffectPeriod","{0} Period: {1}"), DurationText, FText::AsNumber(GameplayEffect.GetPeriod(), &NumberFormatOptions));
 	}
 
 	return DurationText;
@@ -60,11 +63,11 @@ FText FGASGameplayEffectNode::GetStackText() const
 	{
 		if (GameplayEffect.Spec.Def->StackingType == EGameplayEffectStackingType::AggregateBySource)
 		{
-			StackText =  FText::Format(LOCTEXT("GameplayEffectStacksForm", "堆栈数: {0},来自: {1}"), GameplayEffect.Spec.StackCount, FText::FromString(GetNameSafe(GameplayEffect.Spec.GetContext().GetInstigatorAbilitySystemComponent()->GetAvatarActor_Direct())));
+			StackText =  FText::Format(LOCTEXT("GameplayEffectStacksForm", "Stacks: {0},From: {1}"), GameplayEffect.Spec.StackCount, FText::FromString(GetNameSafe(GameplayEffect.Spec.GetContext().GetInstigatorAbilitySystemComponent()->GetAvatarActor())));
 		}
 		else
 		{
-			StackText =  FText::Format(LOCTEXT("GameplayEffectStacks", "堆栈数: {0}"), GameplayEffect.Spec.StackCount);
+			StackText =  FText::Format(LOCTEXT("GameplayEffectStacks", "Stacks: {0}"), GameplayEffect.Spec.StackCount);
 		}
 	}
 
@@ -86,11 +89,11 @@ FText FGASGameplayEffectNode::GetPredictedText() const
 	{
 		if (GameplayEffect.PredictionKey.WasLocallyGenerated())
 		{
-			PredictionText =  LOCTEXT("GameplayEffectPredictedWaiting", "预测和等待");
+			PredictionText =  LOCTEXT("GameplayEffectPredictedWaiting", "Predicted and Waiting");
 		}
 		else
 		{
-			PredictionText = LOCTEXT("GameplayEffectPredictedCaught", "预测和捕获");
+			PredictionText = LOCTEXT("GameplayEffectPredictedCaught", "Predicted and Caught Up");
 		}
 	}
 
@@ -107,6 +110,14 @@ FName FGASGameplayEffectNode::GetGrantedTagsName() const
 	return *GrantedTags.ToStringSimple();
 }
 
+FString FGASGameplayEffectNode::CleanupName(FString Str) const
+{
+
+	Str.RemoveFromStart(TEXT("Default__"));
+	Str.RemoveFromEnd(TEXT("_c"));
+	return Str;
+}
+
 FName FGASGameplayEffectNode::GetGAName() const
 {
 	if (ModSpec && ModInfo)
@@ -114,7 +125,7 @@ FName FGASGameplayEffectNode::GetGAName() const
 		return *ModInfo->Attribute.GetName();
 	}
 
-	return *GetNameSafe(GameplayEffect.Spec.Def);
+	return *CleanupName(GetNameSafe(GameplayEffect.Spec.Def));
 }
 
 FGASGameplayEffectNode::FGASGameplayEffectNode(const UWorld* InWorld, const FActiveGameplayEffect InGameplayEffect)

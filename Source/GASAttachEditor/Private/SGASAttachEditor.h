@@ -1,3 +1,4 @@
+// <Copyright (C) Monocluar. 2021. All Rights Reserved.
 
 #pragma once
 
@@ -57,7 +58,7 @@ public:
 private:
 
 	virtual bool HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent) override;
-	virtual const TCHAR* GetDebugName() const override { return TEXT("AttachInputProcessor"); }
+	//virtual const TCHAR* GetDebugName() const override { return TEXT("AttachInputProcessor"); }
 	virtual void Tick(const float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> Cursor) override {}
 
 private:

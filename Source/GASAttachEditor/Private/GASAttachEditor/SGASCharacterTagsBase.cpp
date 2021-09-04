@@ -1,3 +1,5 @@
+// <Copyright (C) Monocluar. 2021. All Rights Reserved.
+
 #include "SGASCharacterTagsBase.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "GameplayTagsManager.h"

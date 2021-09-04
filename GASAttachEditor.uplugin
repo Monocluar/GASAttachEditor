@@ -3,29 +3,28 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "GASAttachEditor",
-	"Description": "用于查看角色中携带的GA",
+	"Description": "Used to view role assignment properties in the AbilitySystem",
 	"Category": "Gameplay",
 	"CreatedBy": "Monocluar",
 	"CreatedByURL": "",
-	"DocsURL": "",
-	"MarketplaceURL": "",
+	"DocsURL": "https://docs.google.com/document/d/1c6VZuOIZi2U1Lph2zUM-kvgujyt9UZ6S1-8nPG_zTYA/edit?usp=sharing",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/faabce60b69a4f38ac1242953ab97b14",
 	"SupportURL": "",
-	"EngineVersion": "4.26.0",
+	"EngineVersion": "4.25.0",
 	"EnabledByDefault": false,
 	"CanContainContent": false,
-	"Installed": false,
+	"Installed": true,
 	"Modules": [
 		{
 			"Name": "GASAttachEditor",
 			"Type": "DeveloperTool",
 			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"GameplayAbilities"
-			],
 			"WhitelistPlatforms": [
 				"Win64",
-				"Win32",
-				"Linux"
+				"Win32"
+			],
+			"AdditionalDependencies": [
+				"GameplayAbilities"
 			]
 		}
 	],

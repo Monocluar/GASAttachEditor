@@ -1,3 +1,5 @@
+// <Copyright (C) Monocluar. 2021. All Rights Reserved.
+
 #include "SGASAttachEditor.h"
 #include "Widgets/SBoxPanel.h"
 #include "GASAttachEditor/SGASReflectorNodeBase.h"
@@ -14,7 +16,6 @@
 #include "Framework/Application/SlateApplication.h"
 #include "GameplayTagsManager.h"
 #if WITH_EDITOR
-#include "SGameplayTagWidget.h"
 #include "EditorStyleSet.h"
 #endif
 #include "Widgets/Docking/SDockTab.h"
@@ -122,7 +123,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 
 		if (InSelectComponent == ASC.Get() && !bIsSelect)
 		{
-			SelectActorName = ASC->GetAvatarActor_Direct()->GetFName();
+			SelectActorName = ASC->GetAvatarActor()->GetFName();
 			Info->LastDebugTarget = ASC;
 			bIsSelect = true;
 			break;
@@ -145,7 +146,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 			if (PlayerComp.IsValidIndex(0))
 			{
 				Info->LastDebugTarget = PlayerComp[0];
-				SelectActorName = Info->LastDebugTarget->GetAvatarActor_Direct()->GetFName();
+				SelectActorName = Info->LastDebugTarget->GetAvatarActor()->GetFName();
 			}
 			else
 			{
@@ -159,7 +160,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 			{
 				if (!ASC.IsValid()) continue;
 
-				if (ASC->GetAvatarActor_Direct()->GetFName() == SelectActorName)
+				if (ASC->GetAvatarActor()->GetFName() == SelectActorName)
 				{
 					Info->LastDebugTarget = ASC;
 					bIsSelectActorName = true;
@@ -173,7 +174,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 				if (PlayerComp.IsValidIndex(0) && PlayerComp[0] != nullptr)
 				{
 					Info->LastDebugTarget = PlayerComp[0];
-					SelectActorName = PlayerComp[0]->GetAvatarActor_Direct()->GetFName();
+					SelectActorName = PlayerComp[0]->GetAvatarActor()->GetFName();
 				}
 				else
 				{
@@ -450,6 +451,7 @@ private:
 
 	TArray<TSharedRef<FGASAttributesNodeBase>> AttributesFilteredTreeRoot;
 
+/*
 #if WITH_EDITOR
 	TArray<SGameplayTagWidget::FEditableGameplayTagContainerDatum> EditableOwnerContainers;
 	FGameplayTagContainer OwnweTagContainer;
@@ -459,7 +461,7 @@ private:
 	FGameplayTagContainer BlockedTagContainer;
 	FGameplayTagContainer OldBlockedTagContainer;
 
-#endif
+#endif*/
 
 private:
 	TSharedPtr<SGameplayEffectTree> GameplayEffectTree;
@@ -485,8 +487,7 @@ void SGASAttachEditor::RegisterTabSpawner(FTabManager& TabManager)
 	{
 		return SNew(SDockTab)
 			.TabRole(ETabRole::PanelTab)
-			//.Label(LOCTEXT("TabTitle", "游戏中GAS查看器"))
-			.Label(LOCTEXT("TabTitle", "In Game GA Viewer"))
+			.Label(LOCTEXT("TabTitle", "AbilitySystemViewer"))
 			[
 				SNew(SBorder)
 #if WITH_EDITOR
@@ -500,8 +501,7 @@ void SGASAttachEditor::RegisterTabSpawner(FTabManager& TabManager)
 	};
 
 	TabManager.RegisterTabSpawner(SGASAttachEditor::GetTabName(), FOnSpawnTab::CreateStatic(SpawnCallStackViewTab))
-		//.SetDisplayName(LOCTEXT("TabTitle", "游戏中GAS查看器"));
-		.SetDisplayName(LOCTEXT("TabTitle", "In Game GA Viewer"));
+		.SetDisplayName(LOCTEXT("TabTitle", "AbilitySystemViewer"));
 }
 
 void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
@@ -532,8 +532,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 				[
 					SNew(SButton)
 					.HAlign(HAlign_Left)
-					//.Text(LOCTEXT("Refresh", "刷新查看"))
-					.Text(LOCTEXT("Refresh", "UpData GA"))
+					.Text(LOCTEXT("Refresh", "Refresh Viewer"))
 					.OnClicked(this, &SGASAttachEditorImpl::UpdateGameplayCueListItemsButtom)
 				]
 				
@@ -548,7 +547,6 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 					.ButtonContent()
 					[
 						SNew(STextBlock)
-						//.ToolTipText(LOCTEXT("ShowWorldTypeType", "选择需要查看场景"))
 						.ToolTipText(LOCTEXT("ShowWorldTypeType", "Select World Scene"))
 						.Text_Lambda([=]{return SelectWorldSceneText;})
 					]
@@ -590,8 +588,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 					.ButtonContent()
 					[
 						SNew( STextBlock )
-						//.ToolTipText(LOCTEXT("ShowOverrideType", "选择需要查看的角色的GA"))
-						.ToolTipText(LOCTEXT("ShowOverrideType", "Select Player GA"))
+						.ToolTipText(LOCTEXT("ShowOverrideType", "Select AbilitySystem"))
 						.Text(this, &SGASAttachEditorImpl::GetOverrideTypeDropDownText )
 					]
 				]
@@ -614,8 +611,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 					.ButtonContent()
 					[
 						SNew(STextBlock)
-						//.ToolTipText(LOCTEXT("ShowCharactAbilitieType", "选择需要查看角色身上的效果类型"))
-						.ToolTipText(LOCTEXT("ShowCharactAbilitieType", "Select Player Look Up Type"))
+						.ToolTipText(LOCTEXT("ShowCharactAbilitieType", "Select AbilitySystem Mold"))
 						.Text(this, &SGASAttachEditorImpl::GetShowDebugAbilitieCategoriesDropDownText)
 					]
 				]
@@ -637,6 +633,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 	InputPtr = MakeShareable(new FAttachInputProcessor(this));
 	FSlateApplication::Get().RegisterInputPreProcessor(InputPtr);
 
+/*
 #if WITH_EDITOR
 	//TagKeyDownHandle = FSlateApplication::Get().OnApplicationPreInputKeyDownListener().AddRaw(this, &SGASAttachEditorImpl::OnApplicationPreInputKeyDownListener);
 
@@ -645,7 +642,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 
 	EditableOwnerContainers.Add(SGameplayTagWidget::FEditableGameplayTagContainerDatum(nullptr,&OwnweTagContainer));
 	EditableBlockedContainers.Add(SGameplayTagWidget::FEditableGameplayTagContainerDatum(nullptr,&BlockedTagContainer));
-#endif
+#endif*/
 }
 
 
@@ -681,18 +678,17 @@ TSharedRef<SWidget> SGASAttachEditorImpl::OnGetShowWorldTypeMenu()
 			FText ShowName;
 			if (Item.RunAsDedicated)
 			{
-				//ShowName = LOCTEXT("Dedicated","专用服务器");
 				ShowName = LOCTEXT("Dedicated","Dedicated");
 			}
 			else
 			{
 				if (Item.WorldType == EWorldType::Type::Game)
 				{
-					ShowName = LOCTEXT("Client",/*"客户端"*/"Client");
+					ShowName = LOCTEXT("Client", "Client");
 				}
 				else
 				{
-					ShowName = FText::Format(FText::FromString("{0}  [{1}]"), LOCTEXT("Client",/*"客户端"*/"Client"), FText::AsNumber(Item.PIEInstance));
+					ShowName = FText::Format(FText::FromString("{0}  [{1}]"), LOCTEXT("Client", "Client"), FText::AsNumber(Item.PIEInstance));
 				}
 				
 			}
@@ -712,17 +708,17 @@ void SGASAttachEditorImpl::HandleShowWorldTypeChange(FWorldContext InWorldContex
 
 	if (InWorldContext.RunAsDedicated)
 	{
-		SelectWorldSceneText = LOCTEXT("Dedicated", "专用服务器");
+		SelectWorldSceneText = LOCTEXT("Dedicated", "Dedicated");
 	}
 	else
 	{
 		if (InWorldContext.WorldType == EWorldType::Type::Game)
 		{
-			SelectWorldSceneText = LOCTEXT("Client",/*"客户端"*/"Client");
+			SelectWorldSceneText = LOCTEXT("Client","Client");
 		}
 		else
 		{
-			SelectWorldSceneText = FText::Format(FText::FromString("{0}  [{1}]"), LOCTEXT("Client",/*"客户端"*/"Client"), FText::AsNumber(InWorldContext.PIEInstance));
+			SelectWorldSceneText = FText::Format(FText::FromString("{0}  [{1}]"), LOCTEXT("Client","Client"), FText::AsNumber(InWorldContext.PIEInstance));
 		}
 	}
 
@@ -776,6 +772,7 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::HandleReflectorTreeContextMenuPtr()
 
 void SGASAttachEditorImpl::HandleReflectorTreeHiddenColumnsListChanged()
 {
+/*
 #if WITH_EDITOR
 	if (AbilitieReflectorTree && AbilitieReflectorTree->GetHeaderRow())
 	{
@@ -787,7 +784,7 @@ void SGASAttachEditorImpl::HandleReflectorTreeHiddenColumnsListChanged()
 		}
 		SaveSettings();
 	}
-#endif
+#endif*/
 }
 
 EColumnSortMode::Type SGASAttachEditorImpl::GetColumnSortMode(const FName ColumnId) const
@@ -839,15 +836,12 @@ FText GetLocalRoleText(ENetRole InRole)
 	switch (InRole)
 	{
 	case ROLE_Authority:
-		// RoleText = LOCTEXT("Authority", "权威");
 		RoleText = LOCTEXT("Authority", "Authority");
 		break;
 	case ROLE_AutonomousProxy:
-		// RoleText = LOCTEXT("AutonomousProxy", "本地");
 		RoleText = LOCTEXT("AutonomousProxy", "AutonomousProxy");
 		break;
 	case ROLE_SimulatedProxy:
-		// RoleText = LOCTEXT("SimulatedProxy", "模拟");
 		RoleText = LOCTEXT("SimulatedProxy", "SimulatedProxy");
 		break;
 	}
@@ -862,8 +856,8 @@ FText GetOverrideTypeDropDownText_Explicit(const TWeakObjectPtr<UAbilitySystemCo
 		return FText();
 	}
 
-	AActor* LocalAvatarActor = InComp->GetAvatarActor_Direct();
-	AActor* LocalOwnerActor = InComp->GetOwnerActor();
+	AActor* LocalAvatarActor = InComp->GetAvatarActor();
+	AActor* LocalOwnerActor = InComp->OwnerActor;
 
 	FText OutName = FText::FromString(LocalAvatarActor->GetName());
 
@@ -891,7 +885,7 @@ FText SGASAttachEditorImpl::GetOverrideTypeDropDownText() const
 {
 	if (SelectAbilitySystemComponent.IsValid())
 	{
-		return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(SelectAbilitySystemComponent->GetAvatarActor_Direct()->GetName()), GetLocalRoleText(SelectAbilitySystemComponent->GetAvatarActor_Direct()->GetLocalRole()));
+		return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(SelectAbilitySystemComponent->GetAvatarActor()->GetName()), GetLocalRoleText(SelectAbilitySystemComponent->GetAvatarActor()->GetLocalRole()));
 	}
 
 	return FText();
@@ -931,8 +925,7 @@ void SGASAttachEditorImpl::SetPickingMode(bool bTick)
 
 FText SGASAttachEditorImpl::HandleGetPickingModeText() const
 {
-	//return bPickingTick ? LOCTEXT("bPickingTickYes", "按 END 键停止刷新") : LOCTEXT("bPickingTickNo", "持续更新") ;
-	return bPickingTick ? LOCTEXT("bPickingTickYes", "Key Down 'END' Break ") : LOCTEXT("bPickingTickNo", "Continuous Update") ;
+	return bPickingTick ? LOCTEXT("bPickingTickYes", " Down 'END' Key Break") : LOCTEXT("bPickingTickNo", "Continuous Update") ;
 }
 
 void SGASAttachEditorImpl::SaveSettings()
@@ -966,9 +959,10 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 			{
 				OldOwnerTags = OwnerTags;
 				FilteredOwnedTagsView->ClearChildren();
+/*
 #if WITH_EDITOR
 				OwnweTagContainer.Reset();
-#endif
+#endif*/
 				
 				for (FGameplayTag InTag : OwnerTags)
 				{
@@ -977,9 +971,10 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 							SNew(SCharacterTagsViewItem)
 							.TagsItem(FGASCharacterTags::Create(ASC, InTag, "ActivationOwnedTags"))
 						];
+/*
 #if WITH_EDITOR
 					OwnweTagContainer.AddTag(InTag);
-#endif
+#endif*/
 				}
 
 			}
@@ -991,9 +986,10 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 			if (BlockTags != OldBlockedTags)
 			{
 				FilteredBlockedTagsView->ClearChildren();
+/*
 #if WITH_EDITOR
 				BlockedTagContainer.Reset();
-#endif
+#endif*/
 				for (FGameplayTag InTag : BlockTags)
 				{
 					FilteredBlockedTagsView->AddSlot()
@@ -1001,9 +997,10 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 							SNew(SCharacterTagsViewItem)
 							.TagsItem(FGASCharacterTags::Create(ASC, InTag, "ActivationBlockedTags"))
 						];
+/*
 #if WITH_EDITOR
 					BlockedTagContainer.AddTag(InTag);
-#endif
+#endif*/
 				}
 
 			}
@@ -1039,7 +1036,7 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 		if (SelectAbilitieCategories == EDebugAbilitieCategories::Attributes &&  AttributesReflectorTree.IsValid())
 		{
 			AttributesFilteredTreeRoot.Reset();
-			for (UAttributeSet* Set : ASC->GetSpawnedAttributes())
+			for (UAttributeSet* Set : ASC->SpawnedAttributes)
 			{
 				if (!Set)
 				{
@@ -1147,19 +1144,15 @@ FORCEINLINE FText SGASAttachEditorImpl::GetAbilitieCategoriesText(EDebugAbilitie
 	switch (InType)
 	{
 	case EDebugAbilitieCategories::Tags:
-		//TypeText = LOCTEXT("Categories_Tigs", "标签");
 		TypeText = LOCTEXT("Categories_Tigs", "Tigs");
 		break;
 	case EDebugAbilitieCategories::Ability:
-		//TypeText = LOCTEXT("Categories_Ability", "技能");
-		TypeText = LOCTEXT("Categories_Ability", "Ability");
+		TypeText = LOCTEXT("Categories_Ability", "Abilities");
 		break;
 	case EDebugAbilitieCategories::Attributes:
-		//TypeText = LOCTEXT("Categories_Attributes", "属性");
 		TypeText = LOCTEXT("Categories_Attributes", "Attributes");
 		break;
 	case EDebugAbilitieCategories::GameplayEffects:
-		//TypeText = LOCTEXT("Categories_GameplayEffects", "效果");
 		TypeText = LOCTEXT("Categories_GameplayEffects", "GameplayEffects");
 		break;
 	}
@@ -1232,7 +1225,6 @@ UWorld* SGASAttachEditorImpl::GetWorld()
 
 		if (NewWorldList[0].RunAsDedicated)
 		{
-			//SelectWorldSceneText = LOCTEXT("Dedicated", "专用服务器");
 			SelectWorldSceneText = LOCTEXT("Dedicated", "Dedicated");
 		}
 		else
@@ -1270,8 +1262,7 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityTagWidget()
 			.Padding(2.f)
 			[
 				SNew(STextBlock)
-				//.Text(LOCTEXT("CharacterHasOwnTags", "当前角色拥有的Tags"))
-				.Text(LOCTEXT("CharacterHasOwnTags", "Player Owned Tags"))
+				.Text(LOCTEXT("CharacterHasOwnTags", "Owned Gameplay Tags"))
 			]
 
 			+ SVerticalBox::Slot()
@@ -1284,8 +1275,8 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityTagWidget()
 #endif
 				[
 					SAssignNew(FilteredOwnedTagsView, SWrapBox)
-					.Orientation(EOrientation::Orient_Horizontal)
-					.UseAllottedSize(true)
+					//.Orientation(EOrientation::Orient_Horizontal)
+					//.UseAllottedSize(true)
 					.InnerSlotPadding(FVector2D(5.f))
 				]
 			]
@@ -1302,8 +1293,7 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityTagWidget()
 			.Padding(2.f)
 			[
 				SNew(STextBlock)
-				//.Text(LOCTEXT("CharacterHasBlaTags", "当前角色阻止的Tags"))
-			.Text(LOCTEXT("CharacterHasBlaTags", "Player Back Tags"))
+				.Text(LOCTEXT("CharacterHasBlaTags", "Block Gameplay Tags"))
 			]
 
 			+ SVerticalBox::Slot()
@@ -1316,8 +1306,8 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityTagWidget()
 				.Padding(2.f)
 				[
 					SAssignNew(FilteredBlockedTagsView, SWrapBox)
-					.Orientation(EOrientation::Orient_Horizontal)
-					.UseAllottedSize(true)
+					//.Orientation(EOrientation::Orient_Horizontal)
+					//.UseAllottedSize(true)
 					.InnerSlotPadding(FVector2D(5.f))
 				]
 			]
@@ -1336,9 +1326,10 @@ FReply SGASAttachEditorImpl::OnMouseButtonUpTags(const FGeometry& MyGeometry, co
 {
 	if (MouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
 	{
-		TSharedPtr<SGameplayTagWidget> TagWidget = 
+
+		/*TSharedPtr<SGameplayTagWidget> TagWidget = 
 			SNew(SGameplayTagWidget, TagsName == "OwnTags" ? EditableOwnerContainers : EditableBlockedContainers)
-			.GameplayTagUIMode(EGameplayTagUIMode::SelectionMode)
+			//.GameplayTagUIMode(EGameplayTagUIMode::SelectionMode)
 			.ReadOnly(false)
 			.OnTagChanged(this, &SGASAttachEditorImpl::RefreshTagList, TagsName);
 
@@ -1355,7 +1346,7 @@ FReply SGASAttachEditorImpl::OnMouseButtonUpTags(const FGeometry& MyGeometry, co
 
 			FWidgetPath WidgetPath = MouseEvent.GetEventPath() != nullptr ? *MouseEvent.GetEventPath() : FWidgetPath();
 			FSlateApplication::Get().PushMenu(AsShared(), WidgetPath, TagWidget.ToSharedRef(), MouseEvent.GetScreenSpacePosition(), FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));
-		}
+		}*/
 
 	}
 	return FReply::Handled();
@@ -1364,7 +1355,7 @@ FReply SGASAttachEditorImpl::OnMouseButtonUpTags(const FGeometry& MyGeometry, co
 
 void SGASAttachEditorImpl::RefreshTagList(FName TagsName)
 {
-	bool bIsOwnTag = TagsName == "OwnTags";
+	/*bool bIsOwnTag = TagsName == "OwnTags";
 
 	FGameplayTagContainer* NewTagContainer =  bIsOwnTag ? &OwnweTagContainer : &BlockedTagContainer;
 	FGameplayTagContainer* OldTagContainer = bIsOwnTag ? &OldOwnweTagContainer : &OldBlockedTagContainer;
@@ -1414,7 +1405,7 @@ void SGASAttachEditorImpl::RefreshTagList(FName TagsName)
 		}
 	}
 	
-	*OldTagContainer = *NewTagContainer;
+	*OldTagContainer = *NewTagContainer;*/
 }
 #endif
 void SGASAttachEditorImpl::HandleScreenModeStateChanged(ECheckBoxState NewValue, EScreenGAModeState InState)
@@ -1467,15 +1458,12 @@ FText SGASAttachEditorImpl::HandleGeScreenModeText(EScreenGAModeState InState) c
 	switch (InState)
 	{
 	case Active:
-		//StateText = LOCTEXT("ActiveScreen","激活");
 		StateText = LOCTEXT("ActiveScreen","Active");
 		break;
 	case Blocked:
-		//StateText = LOCTEXT("BlockedScreen","阻止");
 		StateText = LOCTEXT("BlockedScreen","Blocked");
 		break;
 	case NoActive:
-		//StateText = LOCTEXT("NoActive","未激活");
 		StateText = LOCTEXT("NoActive","NoActive");
 		break;
 	default:
@@ -1537,35 +1525,28 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityToolWidget()
 				.HeaderRow
 				(
 					SNew(SHeaderRow)
-					.CanSelectGeneratedColumn(true)
-					.HiddenColumnsList(HiddenColumnsList)
-					.OnHiddenColumnsListChanged(this, &SGASAttachEditorImpl::HandleReflectorTreeHiddenColumnsListChanged)
+					//.CanSelectGeneratedColumn(true)
+					//.HiddenColumnsList(HiddenColumnsList)
+					//.OnHiddenColumnsListChanged(this, &SGASAttachEditorImpl::HandleReflectorTreeHiddenColumnsListChanged)
 
 					+ SHeaderRow::Column(NAME_AbilitietName)
 					.SortMode(this,&SGASAttachEditorImpl::GetColumnSortMode, NAME_AbilitietName)
 					.OnSort(this, &SGASAttachEditorImpl::OnColumnSortModeChanged)
-					//.DefaultLabel(LOCTEXT("AbilitietName", "名称"))
-					.DefaultLabel(LOCTEXT("AbilitietName", "AbilitietName"))
-					//.DefaultTooltip(LOCTEXT("AbilitietNameToolTip", "技能名称/任务名称/调试名称"))
-					.DefaultTooltip(LOCTEXT("AbilitietNameToolTip", "AbilitietName/TaskName"))
+					.DefaultLabel(LOCTEXT("AbilitietName", "Ability Name"))
+					.DefaultTooltip(LOCTEXT("AbilitietNameToolTip", "Ability Name/Task Name"))
 					.FillWidth(0.6f)
 					.ShouldGenerateWidget(true)
 
 					+ SHeaderRow::Column(NAME_GAStateType)
-					/*.DefaultLabel(LOCTEXT("GAAbilitietStateType", "当前状态"))
-					.DefaultTooltip(LOCTEXT("GAStateTypeToolTip", "当前状态是否激活，或者是可以被激活但是因为某些原因被拦截"))*/
-					.DefaultLabel(LOCTEXT("GAAbilitietStateType", "AbilitietStateType"))
-					.DefaultTooltip(LOCTEXT("GAStateTypeToolTip", "Whether the current state is activated or can be activated but blocked for some reason"))
+					.DefaultLabel(LOCTEXT("GAAbilitietStateType", "Ability State"))
 					.FillWidth(0.2f)
 
 					+ SHeaderRow::Column(NAME_GAIsActive)
-					//.DefaultLabel(LOCTEXT("GAIsActive", "是否激活"))
 					.DefaultLabel(LOCTEXT("GAIsActive", "IsActive"))
 					.FixedWidth(60.f)
 
 					+ SHeaderRow::Column(NAME_GAAbilityTriggers)
-					//.DefaultLabel(LOCTEXT("GAAbilityTriggers", "存在的激活Tag"))
-					.DefaultLabel(LOCTEXT("GAAbilityTriggers", "AbilityTriggers"))
+					.DefaultLabel(LOCTEXT("GAAbilityTriggers", "Trigger Tags"))
 					.HAlignHeader(EHorizontalAlignment::HAlign_Center)
 					.FillWidth(0.2)
 				)
@@ -1590,16 +1571,14 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAttributesToolWidget()
 				.HeaderRow
 				(
 					SNew(SHeaderRow)
-					.CanSelectGeneratedColumn(true)
+					//.CanSelectGeneratedColumn(true)
 
 					+ SHeaderRow::Column(NAME_AttributesName)
-					//.DefaultLabel(LOCTEXT("AttributesName", "属性名称"))
-					.DefaultLabel(LOCTEXT("AttributesName", "AttributesName"))
+					.DefaultLabel(LOCTEXT("AttributesName", "Attribute Name"))
 					.FillWidth(0.4f)
 					.ShouldGenerateWidget(true)
 
 					+ SHeaderRow::Column(NAME_GANumericAttribute)
-					//.DefaultLabel(LOCTEXT("GAAttributeStateType", "当前属性值"))
 					.DefaultLabel(LOCTEXT("GAAttributeStateType", "Attribute Value"))
 					.FillWidth(0.6f)
 
@@ -1629,44 +1608,36 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateGameplayEffectToolWidget()
 			.HeaderRow
 			(
 				SNew(SHeaderRow)
-				.CanSelectGeneratedColumn(true)
-				.HiddenColumnsList(HiddenColumnsList)
-				.OnHiddenColumnsListChanged(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeHiddenColumnsListChanged)
+				//.CanSelectGeneratedColumn(true)
+				//.HiddenColumnsList(HiddenColumnsList)
+				//.OnHiddenColumnsListChanged(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeHiddenColumnsListChanged)
 
 				+ SHeaderRow::Column(NAME_GAGameplayEffectName)
-				//.DefaultLabel(LOCTEXT("GAGameplayEffectName", "名称"))
-				.DefaultLabel(LOCTEXT("GAGameplayEffectName", "GameplayEffectName"))
+				.DefaultLabel(LOCTEXT("GAGameplayEffectName", "GameplayEffect Name"))
 				.HAlignHeader(EHorizontalAlignment::HAlign_Center)
-				//.DefaultTooltip(LOCTEXT("GAGameplayEffectToolTip", "GE名称 / 加成属性"))
 				.DefaultTooltip(LOCTEXT("GAGameplayEffectToolTip", "GameplayEffect Name / Bonus Attribute"))
 				.FillWidth(0.2f)
 
 				+ SHeaderRow::Column(NAME_GAGameplayEffectDuration)
-				//.DefaultLabel(LOCTEXT("GAGameplayEffectDuration", "时间"))
-				.DefaultLabel(LOCTEXT("GAGameplayEffectDuration", "Time"))
+				.DefaultLabel(LOCTEXT("GAGameplayEffectDuration", "Duration"))
 				.HAlignHeader(EHorizontalAlignment::HAlign_Center)
-				//.DefaultTooltip(LOCTEXT("GAGameplayEffectDurationToolTip", "GE时间详细叙述"))
-				.DefaultTooltip(LOCTEXT("GAGameplayEffectDurationToolTip", "GameplayEffect Time"))
+				.DefaultTooltip(LOCTEXT("GAGameplayEffectDurationToolTip", "GameplayEffect Duration"))
 				.FillWidth(0.4f)
 
 				+ SHeaderRow::Column(NAME_GAGameplayEffectStack)
 				.HAlignHeader(EHorizontalAlignment::HAlign_Center)
-				//.DefaultLabel(LOCTEXT("GAGameplayEffectStack", "堆栈信息"))
-				.DefaultLabel(LOCTEXT("GAGameplayEffectStack", "GameplayEffectStack"))
+				.DefaultLabel(LOCTEXT("GAGameplayEffectStack", "GameplayEffect Stack"))
 				.FillWidth(0.1f)
 
 				+ SHeaderRow::Column(NAME_GAGameplayEffectLevel)
 				.HAlignHeader(EHorizontalAlignment::HAlign_Center)
-				//.DefaultLabel(LOCTEXT("GAGameplayEffectLevel", "等级"))
 				.DefaultLabel(LOCTEXT("GAGameplayEffectLevel", "Level"))
 				.FillWidth(0.1f)
 
 				+ SHeaderRow::Column(NAME_GAGameplayEffectGrantedTags)
 				.HAlignHeader(EHorizontalAlignment::HAlign_Center)
-				//.DefaultLabel(LOCTEXT("GAGameplayEffectGrantedTags", "标签"))
-				//.DefaultTooltip(LOCTEXT("GAGameplayEffectToolTip", "含有的所有标签"))
 				.DefaultLabel(LOCTEXT("GAGameplayEffectGrantedTags", "Tags"))
-				.DefaultTooltip(LOCTEXT("GAGameplayEffectToolTip", "GameplayEffect Own Tags"))
+				.DefaultTooltip(LOCTEXT("GAGameplayEffectToolTip", "Granted Tags"))
 				.FillWidth(0.2f)
 			)
 		];
@@ -1685,6 +1656,7 @@ void SGASAttachEditorImpl::HandleGameplayEffectTreeGetChildren(TSharedRef<FGASGa
 
 void SGASAttachEditorImpl::HandleGameplayEffectTreeHiddenColumnsListChanged()
 {
+/*
 #if WITH_EDITOR
 	if (GameplayEffectTree && GameplayEffectTree->GetHeaderRow())
 	{
@@ -1696,7 +1668,7 @@ void SGASAttachEditorImpl::HandleGameplayEffectTreeHiddenColumnsListChanged()
 		}
 		SaveSettings();
 	}
-#endif
+#endif*/
 }
 
 void SGASAttachEditorImpl::HandleGameplayEffectTreeSelectionChanged(TSharedPtr<FGASGameplayEffectNodeBase>, ESelectInfo::Type /*SelectInfo*/)
