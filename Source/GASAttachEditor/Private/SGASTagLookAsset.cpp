@@ -3,7 +3,7 @@
 #include "SGASTagLookAsset.h"
 
 #if WITH_EDITOR
-//#include "SGameplayTagWidget.h"
+#include "GameplayTagWidget/SGameplayTagWidget.h"
 #include "GameplayTagContainer.h"
 #endif
 
@@ -52,7 +52,6 @@ protected:
 
 
 private:
-/*
 #if WITH_EDITOR
 	// 当前拥有的Tag
 	// Currently owned tag
@@ -61,7 +60,7 @@ private:
 	// Filtered tag
 	FGameplayTagContainer TagContainer;
 	FGameplayTagContainer OldTagContainer;
-#endif*/
+#endif
 
 	// 筛选标签组控件
 	// Filter label group controls
@@ -110,6 +109,7 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 						SAssignNew(FilteredOwnedTagsView, SWrapBox)
 						//.Orientation(EOrientation::Orient_Horizontal)
 						//.UseAllottedSize(true)
+						.UseAllottedWidth(true)
 						.InnerSlotPadding(FVector2D(5.f))
 					]
 				]
@@ -149,12 +149,11 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 			]
 		];
 
-/*
 #if WITH_EDITOR
 	EditableContainers.Empty();
 	TagContainer.Reset();
 	EditableContainers.Add(SGameplayTagWidget::FEditableGameplayTagContainerDatum(nullptr,&TagContainer));
-#endif*/
+#endif
 }
 
 #if WITH_EDITOR
@@ -162,21 +161,21 @@ FReply SGASTagLookAssetImpl::OnMouseButtonUpTags(const FGeometry& MyGeometry, co
 {
 	if (MouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
 	{
-		/*TSharedPtr<SGameplayTagWidget> TagWidget =
+		TSharedPtr<SGameplayTagWidget> TagWidget =
 			SNew(SGameplayTagWidget,  EditableContainers)
 			.GameplayTagUIMode(EGameplayTagUIMode::SelectionMode)
 			.ReadOnly(false)
 			.OnTagChanged(this, &SGASTagLookAssetImpl::RefreshTagList);
 
 		FWidgetPath WidgetPath = MouseEvent.GetEventPath() != nullptr ? *MouseEvent.GetEventPath() : FWidgetPath();
-		FSlateApplication::Get().PushMenu(AsShared(), WidgetPath, TagWidget.ToSharedRef(), MouseEvent.GetScreenSpacePosition(), FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));*/
+		FSlateApplication::Get().PushMenu(AsShared(), WidgetPath, TagWidget.ToSharedRef(), MouseEvent.GetScreenSpacePosition(), FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));
 	}
 	return FReply::Handled();
 }
 
 void SGASTagLookAssetImpl::RefreshTagList()
 {
-	/*if (TagContainer.Num() > OldTagContainer.Num())
+	if (TagContainer.Num() > OldTagContainer.Num())
 	{
 		TArray<FGameplayTag> NewGameplayTagArr;
 		TagContainer.GetGameplayTagArray(NewGameplayTagArr);
@@ -219,12 +218,12 @@ void SGASTagLookAssetImpl::RefreshTagList()
 	
 	OldTagContainer = TagContainer;
 
-	FillLookTagAsset();*/
+	FillLookTagAsset();
 }
 
 void SGASTagLookAssetImpl::OnDelTag(FGameplayTag Item)
 {
-	//if (!TagContainer.HasTag(Item)) return;
+	if (!TagContainer.HasTag(Item)) return;
 
 	TPanelChildren<SWrapBox::FSlot>* ViewSlots = static_cast<TPanelChildren<SWrapBox::FSlot>*>(FilteredOwnedTagsView->GetChildren());
 
@@ -237,9 +236,9 @@ void SGASTagLookAssetImpl::OnDelTag(FGameplayTag Item)
 		}
 	}
 
-	//TagContainer.RemoveTag(Item);
+	TagContainer.RemoveTag(Item);
 
-	//OldTagContainer = TagContainer;
+	OldTagContainer = TagContainer;
 
 	FillLookTagAsset();
 }
@@ -260,11 +259,9 @@ void SGASTagLookAssetImpl::FillLookTagAsset()
 {
 	TArray<FGameplayTag> NewGameplayTagArr;
 
-/*
 #if WITH_EDITOR
 	TagContainer.GetGameplayTagArray(NewGameplayTagArr);
-#endif*/
-
+#endif
 	TArray<FAssetIdentifier> AssetIdentifiers;
 
 	for (const FGameplayTag& Item : NewGameplayTagArr)
@@ -280,22 +277,27 @@ void SGASTagLookAssetImpl::SetGraphRootIdentifiers(const TArray<FAssetIdentifier
 {
 	LookGAAssetTreeRoot.Reset();
 #if WITH_EDITOR
-	/*IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
-
-	TArray<FAssetDependency> LinksToAsset;
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	TArray<FAssetIdentifier> LinksToAsset;
 	for (const FAssetIdentifier& AssetId : NewGraphRootIdentifiers)
 	{
-		AssetRegistry.GetReferencers(AssetId, LinksToAsset, UE::AssetRegistry::EDependencyCategory::SearchableName, UE::AssetRegistry::EDependencyQuery::NoRequirements);
+		AssetRegistryModule.Get().GetReferencers(AssetId, LinksToAsset, EAssetRegistryDependencyType::Type::SearchableName);
 		//AssetRegistry.GetReferencers(AssetId, LinksToAsset, UE::AssetRegistry::EDependencyCategory::All, UE::AssetRegistry::EDependencyQuery::NoRequirements);
 	}
-	for (FAssetDependency& Asset : LinksToAsset)
+	for (FAssetIdentifier& Asset : LinksToAsset)
 	{
-		FString PackStr = Asset.AssetId.PackageName.ToString();
-		int32 Index = PackStr.Find("/",ESearchCase::CaseSensitive,ESearchDir::FromEnd);
 
-		FString AssPath = FString::Printf(TEXT("Blueprint'%s.%s'"), *PackStr,*PackStr.Right(PackStr.Len() - Index - 1));
 
-		FAssetData AssetData = AssetRegistry.GetAssetByObjectPath(*AssPath);
+// 		FString PackStr = Asset.PackageName.ToString();
+// 		int32 Index = PackStr.Find("/",ESearchCase::CaseSensitive,ESearchDir::FromEnd);
+// 
+// 		FString AssPath = FString::Printf(TEXT("Blueprint'%s.%s'"), *PackStr,*PackStr.Right(PackStr.Len() - Index - 1));
+		TArray<FAssetData> OutAssetData;
+		if (!AssetRegistryModule.Get().GetAssetsByPackageName(Asset.PackageName,OutAssetData)) continue;
+
+		if (!OutAssetData.IsValidIndex(0)) continue;
+
+		FAssetData AssetData = OutAssetData[0];
 
 		if (!AssetData.IsValid()) continue;
 
@@ -310,11 +312,11 @@ void SGASTagLookAssetImpl::SetGraphRootIdentifiers(const TArray<FAssetIdentifier
 			//TSubclassOf<UGameplayAbility> GAAssClass = TSubclassOf<UGameplayAbility>(GAAssBlue->GeneratedClass);
 
 			GAAssObj = Cast<UGameplayAbility>(GAAssBlue->GeneratedClass->GetDefaultObject());
-			/ *FSoftClassPath ClassPath(GAAssBlue->GeneratedClass.Get()->GetPathName());
+			/*FSoftClassPath ClassPath(GAAssBlue->GeneratedClass.Get()->GetPathName());
 			if (UClass* Class = ClassPath.TryLoadClass<UGameplayAbility>())
 			{
 				GAAssObj = NewObject<UGameplayAbility>(Class, NAME_None, RF_Transactional);
-			}* /
+			}*/
 
 			if (!GAAssObj)	continue;
 		}
@@ -346,7 +348,7 @@ void SGASTagLookAssetImpl::SetGraphRootIdentifiers(const TArray<FAssetIdentifier
 			return A->GetTagName().GetStringLength() == B->GetTagName().GetStringLength();
 		}
 		return true;
-	});*/
+	});
 
 #endif
 	LookGAAssetTree->RequestTreeRefresh();

@@ -451,7 +451,6 @@ private:
 
 	TArray<TSharedRef<FGASAttributesNodeBase>> AttributesFilteredTreeRoot;
 
-/*
 #if WITH_EDITOR
 	TArray<SGameplayTagWidget::FEditableGameplayTagContainerDatum> EditableOwnerContainers;
 	FGameplayTagContainer OwnweTagContainer;
@@ -461,7 +460,7 @@ private:
 	FGameplayTagContainer BlockedTagContainer;
 	FGameplayTagContainer OldBlockedTagContainer;
 
-#endif*/
+#endif
 
 private:
 	TSharedPtr<SGameplayEffectTree> GameplayEffectTree;
@@ -633,7 +632,6 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 	InputPtr = MakeShareable(new FAttachInputProcessor(this));
 	FSlateApplication::Get().RegisterInputPreProcessor(InputPtr);
 
-/*
 #if WITH_EDITOR
 	//TagKeyDownHandle = FSlateApplication::Get().OnApplicationPreInputKeyDownListener().AddRaw(this, &SGASAttachEditorImpl::OnApplicationPreInputKeyDownListener);
 
@@ -642,7 +640,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 
 	EditableOwnerContainers.Add(SGameplayTagWidget::FEditableGameplayTagContainerDatum(nullptr,&OwnweTagContainer));
 	EditableBlockedContainers.Add(SGameplayTagWidget::FEditableGameplayTagContainerDatum(nullptr,&BlockedTagContainer));
-#endif*/
+#endif
 }
 
 
@@ -959,10 +957,9 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 			{
 				OldOwnerTags = OwnerTags;
 				FilteredOwnedTagsView->ClearChildren();
-/*
 #if WITH_EDITOR
 				OwnweTagContainer.Reset();
-#endif*/
+#endif
 				
 				for (FGameplayTag InTag : OwnerTags)
 				{
@@ -971,10 +968,9 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 							SNew(SCharacterTagsViewItem)
 							.TagsItem(FGASCharacterTags::Create(ASC, InTag, "ActivationOwnedTags"))
 						];
-/*
 #if WITH_EDITOR
 					OwnweTagContainer.AddTag(InTag);
-#endif*/
+#endif
 				}
 
 			}
@@ -986,10 +982,9 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 			if (BlockTags != OldBlockedTags)
 			{
 				FilteredBlockedTagsView->ClearChildren();
-/*
 #if WITH_EDITOR
 				BlockedTagContainer.Reset();
-#endif*/
+#endif
 				for (FGameplayTag InTag : BlockTags)
 				{
 					FilteredBlockedTagsView->AddSlot()
@@ -997,10 +992,9 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 							SNew(SCharacterTagsViewItem)
 							.TagsItem(FGASCharacterTags::Create(ASC, InTag, "ActivationBlockedTags"))
 						];
-/*
 #if WITH_EDITOR
 					BlockedTagContainer.AddTag(InTag);
-#endif*/
+#endif
 				}
 
 			}
@@ -1277,6 +1271,7 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityTagWidget()
 					SAssignNew(FilteredOwnedTagsView, SWrapBox)
 					//.Orientation(EOrientation::Orient_Horizontal)
 					//.UseAllottedSize(true)
+					.UseAllottedWidth(true)
 					.InnerSlotPadding(FVector2D(5.f))
 				]
 			]
@@ -1308,6 +1303,7 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityTagWidget()
 					SAssignNew(FilteredBlockedTagsView, SWrapBox)
 					//.Orientation(EOrientation::Orient_Horizontal)
 					//.UseAllottedSize(true)
+					.UseAllottedWidth(true)
 					.InnerSlotPadding(FVector2D(5.f))
 				]
 			]
@@ -1327,9 +1323,9 @@ FReply SGASAttachEditorImpl::OnMouseButtonUpTags(const FGeometry& MyGeometry, co
 	if (MouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
 	{
 
-		/*TSharedPtr<SGameplayTagWidget> TagWidget = 
+		TSharedPtr<SGameplayTagWidget> TagWidget = 
 			SNew(SGameplayTagWidget, TagsName == "OwnTags" ? EditableOwnerContainers : EditableBlockedContainers)
-			//.GameplayTagUIMode(EGameplayTagUIMode::SelectionMode)
+			.GameplayTagUIMode(EGameplayTagUIMode::SelectionMode)
 			.ReadOnly(false)
 			.OnTagChanged(this, &SGASAttachEditorImpl::RefreshTagList, TagsName);
 
@@ -1346,7 +1342,7 @@ FReply SGASAttachEditorImpl::OnMouseButtonUpTags(const FGeometry& MyGeometry, co
 
 			FWidgetPath WidgetPath = MouseEvent.GetEventPath() != nullptr ? *MouseEvent.GetEventPath() : FWidgetPath();
 			FSlateApplication::Get().PushMenu(AsShared(), WidgetPath, TagWidget.ToSharedRef(), MouseEvent.GetScreenSpacePosition(), FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));
-		}*/
+		}
 
 	}
 	return FReply::Handled();
@@ -1355,7 +1351,7 @@ FReply SGASAttachEditorImpl::OnMouseButtonUpTags(const FGeometry& MyGeometry, co
 
 void SGASAttachEditorImpl::RefreshTagList(FName TagsName)
 {
-	/*bool bIsOwnTag = TagsName == "OwnTags";
+	bool bIsOwnTag = TagsName == "OwnTags";
 
 	FGameplayTagContainer* NewTagContainer =  bIsOwnTag ? &OwnweTagContainer : &BlockedTagContainer;
 	FGameplayTagContainer* OldTagContainer = bIsOwnTag ? &OldOwnweTagContainer : &OldBlockedTagContainer;
@@ -1405,7 +1401,7 @@ void SGASAttachEditorImpl::RefreshTagList(FName TagsName)
 		}
 	}
 	
-	*OldTagContainer = *NewTagContainer;*/
+	*OldTagContainer = *NewTagContainer;
 }
 #endif
 void SGASAttachEditorImpl::HandleScreenModeStateChanged(ECheckBoxState NewValue, EScreenGAModeState InState)
