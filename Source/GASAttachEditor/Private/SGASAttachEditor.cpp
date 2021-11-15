@@ -1046,13 +1046,15 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 					continue;
 				}
 
-				for (TFieldIterator<FProperty> It(Set->GetClass()); It; ++It)
+				for (TFieldIterator<FStructProperty> It(Set->GetClass()); It; ++It)
 				{
-					FGameplayAttribute	Attribute(*It);
+					if ((*It)->Struct == FGameplayAttributeData::StaticStruct())
+					{
+						FGameplayAttribute	Attribute(*It);
+						TSharedRef<FGASAttributesNode> NewItem = FGASAttributesNode::Create(ASC, Attribute);
 
-					TSharedRef<FGASAttributesNode> NewItem = FGASAttributesNode::Create(ASC, Attribute);
-
-					AttributesFilteredTreeRoot.Add(NewItem);
+						AttributesFilteredTreeRoot.Add(NewItem);
+					}
 				}
 			}
 			AttributesReflectorTree->RequestTreeRefresh();
