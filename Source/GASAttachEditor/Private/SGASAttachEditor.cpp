@@ -306,7 +306,22 @@ protected:
 	// Set radio box name
 	FText HandleGetPickingModeText() const;
 
+protected:
 
+	/** Called when the user clicks the "Expand All" button; Expands the entire tag tree */
+	FReply OnExpandAllClicked();
+
+	/** Called when the user clicks the "Collapse All" button; Collapses the entire tag tree */
+	FReply OnCollapseAllClicked();
+
+
+	void SetGASTreeItemExpansion(bool bExpand);
+
+	bool bGASTreeExpand;
+
+public:
+
+	FORCEINLINE bool HasGASTreeExpand(){ return bGASTreeExpand; }
 
 private:
 
@@ -506,6 +521,7 @@ void SGASAttachEditor::RegisterTabSpawner(FTabManager& TabManager)
 
 void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 {
+	bGASTreeExpand = false;
 	bPickingTick = false;
 	SelectAbilitySystemComponentForActorName = FName();
 	SelectAbilitieCategories = Ability;
@@ -935,6 +951,37 @@ FText SGASAttachEditorImpl::HandleGetPickingModeText() const
 	return bPickingTick ? LOCTEXT("bPickingTickYes", "Key Down 'END' Break ") : LOCTEXT("bPickingTickNo", "Continuous Update") ;
 }
 
+FReply SGASAttachEditorImpl::OnExpandAllClicked()
+{
+	SetGASTreeItemExpansion(true);
+	return FReply::Handled();
+}
+
+FReply SGASAttachEditorImpl::OnCollapseAllClicked()
+{
+	SetGASTreeItemExpansion(false);
+	return FReply::Handled();
+}
+
+void SGASAttachEditorImpl::SetGASTreeItemExpansion(bool bExpand)
+{
+	bGASTreeExpand = bExpand;
+	if (SelectAbilitieCategories == EDebugAbilitieCategories::Ability && AbilitieReflectorTree.IsValid())
+	{
+		for (TSharedRef<FGASAbilitieNodeBase> Item : AbilitieFilteredTreeRoot)
+		{
+			AbilitieReflectorTree->SetItemExpansion(Item, bExpand);
+		}
+	}
+	else if (SelectAbilitieCategories == EDebugAbilitieCategories::GameplayEffects && GameplayEffectTree.IsValid())
+	{
+		for (TSharedRef<FGASGameplayEffectNodeBase> Item : GameplayEffectTreeRoot)
+		{
+			GameplayEffectTree->SetItemExpansion(Item, bExpand);
+		}
+	}
+}
+
 void SGASAttachEditorImpl::SaveSettings()
 {
 	GConfig->SetArray(TEXT("GASAttachEditor"), TEXT("HiddenReflectorTreeColumns"), HiddenReflectorTreeColumns, *GEditorPerProjectIni);
@@ -1076,6 +1123,8 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 			for (FActiveGameplayEffect& ActiveGE : ActiveGameplayEffectsPtr)
 			{
 				GameplayEffectTreeRoot.Add(FGASGameplayEffectNode::Create(GetWorld(), ActiveGE));
+
+				GameplayEffectTree->SetItemExpansion(GameplayEffectTreeRoot.Top(), bGASTreeExpand);
 			}
 
 			GameplayEffectTree->RequestTreeRefresh();
@@ -1618,22 +1667,52 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateGameplayEffectToolWidget()
 		HiddenColumnsList.Add(*Item);
 	}
 
-	return SNew(SBorder)
-		.Padding(0.f)
+	TSharedPtr<SVerticalBox> Widget =
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.Padding(2.f, 2.f)
+		.AutoHeight()
+		.HAlign(HAlign_Left)
 		[
-			SAssignNew(GameplayEffectTree, SGameplayEffectTree)
-			.ItemHeight(24.f)
-			.TreeItemsSource(&GameplayEffectTreeRoot)
-			.OnGenerateRow(this, &SGASAttachEditorImpl::OneGameplayEffecGenerateWidgetForFilterListView)
-			.OnGetChildren(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeGetChildren)
-			.OnSelectionChanged(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeSelectionChanged)
-			.HighlightParentNodesForSelection(true)
-			.HeaderRow
-			(
-				SNew(SHeaderRow)
-				.CanSelectGeneratedColumn(true)
-				.HiddenColumnsList(HiddenColumnsList)
-				.OnHiddenColumnsListChanged(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeHiddenColumnsListChanged)
+			SNew(SHorizontalBox)
+
+			+ SHorizontalBox::Slot()
+			.Padding(FMargin(8.f, 0.f))
+			.AutoWidth()
+			[
+				SNew(SButton)
+				.OnClicked(this, &SGASAttachEditorImpl::OnExpandAllClicked)
+				.Text(NSLOCTEXT("GameplayTagWidget", "GameplayTagWidget_ExpandAll", "Expand All"))
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SButton)
+				.OnClicked(this, &SGASAttachEditorImpl::OnCollapseAllClicked)
+				.Text(NSLOCTEXT("GameplayTagWidget", "GameplayTagWidget_CollapseAll", "Collapse All"))
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.FillHeight(1.f)
+		[
+			SNew(SBorder)
+			.Padding(0.f)
+			[
+				SAssignNew(GameplayEffectTree, SGameplayEffectTree)
+				.ItemHeight(24.f)
+				.TreeItemsSource(&GameplayEffectTreeRoot)
+				.OnGenerateRow(this, &SGASAttachEditorImpl::OneGameplayEffecGenerateWidgetForFilterListView)
+				.OnGetChildren(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeGetChildren)
+				.OnSelectionChanged(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeSelectionChanged)
+				.HighlightParentNodesForSelection(true)
+				.HeaderRow
+				(
+					SNew(SHeaderRow)
+					.CanSelectGeneratedColumn(true)
+					.HiddenColumnsList(HiddenColumnsList)
+					.OnHiddenColumnsListChanged(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeHiddenColumnsListChanged)
 
 				+ SHeaderRow::Column(NAME_GAGameplayEffectName)
 				//.DefaultLabel(LOCTEXT("GAGameplayEffectName", "名称"))
@@ -1671,7 +1750,10 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateGameplayEffectToolWidget()
 				.DefaultTooltip(LOCTEXT("GAGameplayEffectToolTip", "GameplayEffect Own Tags"))
 				.FillWidth(0.2f)
 			)
+			]
 		];
+
+	return Widget;
 }
 
 TSharedRef<ITableRow> SGASAttachEditorImpl::OneGameplayEffecGenerateWidgetForFilterListView(TSharedRef< FGASGameplayEffectNodeBase > InItem, const TSharedRef<STableViewBase>& OwnerTable)
