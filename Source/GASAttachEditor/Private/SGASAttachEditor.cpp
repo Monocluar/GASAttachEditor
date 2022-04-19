@@ -881,11 +881,11 @@ FText GetOverrideTypeDropDownText_Explicit(const TWeakObjectPtr<UAbilitySystemCo
 	AActor* LocalAvatarActor = InComp->GetAvatarActor_Direct();
 	AActor* LocalOwnerActor = InComp->GetOwnerActor();
 
-	FText OutName = FText::FromString(LocalAvatarActor->GetName());
+	FText OutName = FText::FromString(LocalAvatarActor == nullptr ? LocalOwnerActor->GetName() : LocalAvatarActor->GetName());
 
 	if (LocalOwnerActor)
 	{
-		OutName = FText::Format(FText::FromString(TEXT("{0}[{2}][{1}]")), OutName, GetLocalRoleText(LocalAvatarActor->GetLocalRole()), FText::FromString(LocalOwnerActor->GetName()));
+		OutName = FText::Format(FText::FromString(TEXT("{0}[{2}][{1}]")), OutName, GetLocalRoleText(LocalAvatarActor == nullptr ? LocalOwnerActor->GetLocalRole() : LocalAvatarActor->GetLocalRole()), FText::FromString(LocalOwnerActor->GetName()));
 	}
 
 	return OutName;
@@ -907,7 +907,14 @@ FText SGASAttachEditorImpl::GetOverrideTypeDropDownText() const
 {
 	if (SelectAbilitySystemComponent.IsValid())
 	{
-		return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(SelectAbilitySystemComponent->GetAvatarActor_Direct()->GetName()), GetLocalRoleText(SelectAbilitySystemComponent->GetAvatarActor_Direct()->GetLocalRole()));
+		if (AActor* LocalAvatarActor = SelectAbilitySystemComponent->GetAvatarActor_Direct())
+		{
+			return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(LocalAvatarActor->GetName()), GetLocalRoleText(LocalAvatarActor->GetLocalRole()));
+		}
+		else if (AActor* LocalOwnerActor = SelectAbilitySystemComponent->GetOwnerActor())
+		{
+			return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(LocalOwnerActor->GetName()), GetLocalRoleText(LocalOwnerActor->GetLocalRole()));
+		}
 	}
 
 	return FText();
@@ -1074,6 +1081,7 @@ void SGASAttachEditorImpl::UpdateGameplayCueListItems()
 
 				AbilitieFilteredTreeRoot.Add(NewItem);
 
+				AbilitieReflectorTree->SetItemExpansion(AbilitieFilteredTreeRoot.Top(), bGASTreeExpand);
 			}
 
 			RequestSort();
@@ -1548,6 +1556,31 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityToolWidget()
 
 	TSharedPtr<SVerticalBox> Widget = 
 			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.Padding(2.f, 2.f)
+			.AutoHeight()
+			.HAlign(HAlign_Left)
+			[
+				SNew(SHorizontalBox)
+
+				+ SHorizontalBox::Slot()
+				.Padding(FMargin(8.f, 0.f))
+				.AutoWidth()
+				[
+					SNew(SButton)
+					.OnClicked(this, &SGASAttachEditorImpl::OnExpandAllClicked)
+					.Text(NSLOCTEXT("GameplayTagWidget", "GameplayTagWidget_ExpandAll", "Expand All"))
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SButton)
+					.OnClicked(this, &SGASAttachEditorImpl::OnCollapseAllClicked)
+					.Text(NSLOCTEXT("GameplayTagWidget", "GameplayTagWidget_CollapseAll", "Collapse All"))
+				]
+			]
+
 			+ SVerticalBox::Slot()
 			.Padding(2.f, 2.f)
 			.AutoHeight()
