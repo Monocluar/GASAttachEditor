@@ -10,7 +10,7 @@
 	"DocsURL": "",
 	"MarketplaceURL": "",
 	"SupportURL": "",
-	"EngineVersion": "5.0.0",
+	"EngineVersion": "5.1.0",
 	"EnabledByDefault": false,
 	"CanContainContent": false,
 	"Installed": false,
@@ -24,7 +24,6 @@
 			],
 			"WhitelistPlatforms": [
 				"Win64",
-				"Win32",
 				"Linux"
 			]
 		}

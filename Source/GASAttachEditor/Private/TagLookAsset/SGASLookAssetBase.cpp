@@ -150,14 +150,14 @@ void SGASTagViewItem::Construct(const FArguments& InArgs)
 					SNew(SButton)
 					.ContentPadding(FMargin(0))
 #if WITH_EDITOR
-					.ButtonStyle(FEditorStyle::Get(), "FlatButton.Danger")
+					.ButtonStyle(FAppStyle::Get(), "FlatButton.Danger")
 #endif
 					.ForegroundColor(FSlateColor::UseForeground())
 					.OnClicked(this, &SGASTagViewItem::OnRemoveTagClicked)
 					[
 						SNew(STextBlock)
 #if WITH_EDITOR
-						.Font(FEditorStyle::Get().GetFontStyle("FontAwesome.9"))
+						.Font(FAppStyle::Get().GetFontStyle("FontAwesome.9"))
 						.Text(FEditorFontGlyphs::Times)
 #else
 						.Text(FText::FromString("x"))

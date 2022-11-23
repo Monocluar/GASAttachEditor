@@ -268,7 +268,7 @@ TSharedRef<SDockTab> FGASAttachEditorModule::OnSpawnPluginTab(const FSpawnTabArg
 	NomadTab->SetContent(
 		SNew(SBorder)
 #if WITH_EDITOR
-		.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+		.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
 #endif
 		.Padding(FMargin(0.f, 2.f))
 		[

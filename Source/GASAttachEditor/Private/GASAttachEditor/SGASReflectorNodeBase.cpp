@@ -217,7 +217,7 @@ void SGASAbilitieTreeItem::HandleHyperlinkNavigate()
 
 #if WITH_EDITOR
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(*CachedAssetDataStr);
+	FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(*CachedAssetDataStr));
 
 	if (AssetData.IsValid())
 	{

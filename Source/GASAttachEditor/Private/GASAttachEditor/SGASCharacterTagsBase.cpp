@@ -29,7 +29,7 @@ void SCharacterTagsViewItem::Construct(const FArguments& InArgs)
 		[
 			SNew(SButton)
 #if WITH_EDITOR
-			.ButtonStyle(FEditorStyle::Get(), "NoBorder")
+			.ButtonStyle(FAppStyle::Get(), "NoBorder")
 #endif
 			.ToolTipText(TagsItem.IsValid() ? TagsItem->GetTagTipName() : FText())
 			.HAlign(HAlign_Center)
