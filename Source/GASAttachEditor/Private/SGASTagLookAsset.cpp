@@ -293,7 +293,7 @@ void SGASTagLookAssetImpl::SetGraphRootIdentifiers(const TArray<FAssetIdentifier
 
 		FString AssPath = FString::Printf(TEXT("Blueprint'%s.%s'"), *PackStr,*PackStr.Right(PackStr.Len() - Index - 1));
 
-		FAssetData AssetData = AssetRegistry.GetAssetByObjectPath(*AssPath);
+		FAssetData AssetData = AssetRegistry.GetAssetByObjectPath(FSoftObjectPath(*AssPath));
 
 		if (!AssetData.IsValid()) continue;
 
@@ -370,7 +370,7 @@ void SGASTagLookAsset::RegisterTabSpawner(FTabManager& TabManager)
 			.Label(LOCTEXT("TabTitle", "Tag Calls GA Query"))
 			[
 				SNew(SBorder)
-				.BorderImage(FEditorStyle::GetBrush("Docking.Tab.ContentAreaBrush"))
+				.BorderImage(FAppStyle::GetBrush("Docking.Tab.ContentAreaBrush"))
 				.BorderBackgroundColor(FSlateColor(FLinearColor(0.2f,0.2f,0.2f,1.f)))
 			[
 				SNew(SGASTagLookAsset)

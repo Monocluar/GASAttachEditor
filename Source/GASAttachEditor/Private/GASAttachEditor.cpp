@@ -45,7 +45,7 @@ void FGASAttachEditorModule::StartupModule()
 		/*.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "查看角色携带GA"))
 		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "打开“查看角色携带GA”选项卡"))*/
 		.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "View GA Carried By Role"))
-		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "Open 'View GA Carried By Role' TAb"))
+		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "Open 'View GA Carried By Role' Tab"))
 #if WITH_EDITOR
 		.SetGroup(MenuStructure.GetDeveloperToolsDebugCategory())
 #endif
@@ -268,7 +268,7 @@ TSharedRef<SDockTab> FGASAttachEditorModule::OnSpawnPluginTab(const FSpawnTabArg
 	NomadTab->SetContent(
 		SNew(SBorder)
 #if WITH_EDITOR
-		.BorderImage(FEditorStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+		.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
 #endif
 		.Padding(FMargin(0.f, 2.f))
 		[

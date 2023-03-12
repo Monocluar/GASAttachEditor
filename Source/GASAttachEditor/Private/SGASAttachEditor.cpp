@@ -505,7 +505,7 @@ void SGASAttachEditor::RegisterTabSpawner(FTabManager& TabManager)
 			[
 				SNew(SBorder)
 #if WITH_EDITOR
-				.BorderImage(FEditorStyle::GetBrush("Docking.Tab.ContentAreaBrush"))
+				.BorderImage(FAppStyle::GetBrush("Docking.Tab.ContentAreaBrush"))
 #endif
 				.BorderBackgroundColor(FSlateColor(FLinearColor(0.2f,0.2f,0.2f,1.f)))
 				[
