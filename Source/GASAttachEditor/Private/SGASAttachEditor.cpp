@@ -549,7 +549,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 					SNew(SButton)
 					.HAlign(HAlign_Left)
 					//.Text(LOCTEXT("Refresh", "刷新查看"))
-					.Text(LOCTEXT("Refresh", "UpData GA"))
+					.Text(LOCTEXT("Refresh", "Updata GA"))
 					.OnClicked(this, &SGASAttachEditorImpl::UpdateGameplayCueListItemsButtom)
 				]
 				
