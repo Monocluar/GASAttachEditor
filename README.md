@@ -15,7 +15,7 @@ Editor Window with similar (and additional) functionality to UE command-line `Sh
 
 
 To see UE's existing debug information:
--  Command-line `ShowDebug AbilitySystem`:
+-  Run `ShowDebug AbilitySystem` on the command-line.
 ![Screenshot from 2021-05-31 18:02:51](https://user-images.githubusercontent.com/33085556/120176965-76aef000-c23a-11eb-9018-911fc6a69387.png)
 
 
