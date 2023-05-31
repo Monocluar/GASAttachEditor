@@ -678,8 +678,6 @@ SGASAttachEditorImpl::~SGASAttachEditorImpl()
 {
 	FSlateApplication::Get().UnregisterInputPreProcessor(InputPtr);
 	InputPtr = nullptr;
-
-	SWidget::~SWidget();
 }
 
 TSharedRef<SWidget> SGASAttachEditorImpl::OnGetShowWorldTypeMenu()
