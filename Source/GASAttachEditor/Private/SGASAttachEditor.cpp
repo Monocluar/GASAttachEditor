@@ -549,7 +549,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 					SNew(SButton)
 					.HAlign(HAlign_Left)
 					//.Text(LOCTEXT("Refresh", "刷新查看"))
-					.Text(LOCTEXT("Refresh", "UpData GA"))
+					.Text(LOCTEXT("Refresh", "Update GA"))
 					.OnClicked(this, &SGASAttachEditorImpl::UpdateGameplayCueListItemsButtom)
 				]
 				
@@ -678,8 +678,6 @@ SGASAttachEditorImpl::~SGASAttachEditorImpl()
 {
 	FSlateApplication::Get().UnregisterInputPreProcessor(InputPtr);
 	InputPtr = nullptr;
-
-	SWidget::~SWidget();
 }
 
 TSharedRef<SWidget> SGASAttachEditorImpl::OnGetShowWorldTypeMenu()
@@ -880,12 +878,16 @@ FText GetOverrideTypeDropDownText_Explicit(const TWeakObjectPtr<UAbilitySystemCo
 
 	AActor* LocalAvatarActor = InComp->GetAvatarActor_Direct();
 	AActor* LocalOwnerActor = InComp->GetOwnerActor();
+	APawn* AvatarAsPawn = LocalAvatarActor ? Cast<APawn>(LocalAvatarActor) : nullptr;
+	APawn* OwnerAsPawn = LocalOwnerActor ? Cast<APawn>(LocalOwnerActor) : nullptr;
 
 	FText OutName = FText::FromString(LocalAvatarActor == nullptr ? LocalOwnerActor->GetName() : LocalAvatarActor->GetName());
+	bool IsPlayer = (IsValid(AvatarAsPawn) ? AvatarAsPawn->IsPlayerControlled() : false) || (IsValid(OwnerAsPawn) ? OwnerAsPawn->IsPlayerControlled() : false);
+	bool IsSelected =  (LocalAvatarActor ? LocalAvatarActor->IsSelected() : false) || (LocalOwnerActor ? LocalOwnerActor->IsSelected() : false);
 
 	if (LocalOwnerActor)
 	{
-		OutName = FText::Format(FText::FromString(TEXT("{0}[{2}][{1}]")), OutName, GetLocalRoleText(LocalAvatarActor == nullptr ? LocalOwnerActor->GetLocalRole() : LocalAvatarActor->GetLocalRole()), FText::FromString(LocalOwnerActor->GetName()));
+		OutName = FText::Format(FText::FromString(TEXT("{0} [{2}] [{1}]{3}{4}")), OutName, GetLocalRoleText(LocalAvatarActor == nullptr ? LocalOwnerActor->GetLocalRole() : LocalAvatarActor->GetLocalRole()), FText::FromString(LocalOwnerActor->GetName()), FText::FromString(IsPlayer ? " (Player)" : ""), FText::FromString(IsSelected ? " (Selected)" : ""));
 	}
 
 	return OutName;
