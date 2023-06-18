@@ -501,7 +501,7 @@ void SGASAttachEditor::RegisterTabSpawner(FTabManager& TabManager)
 		return SNew(SDockTab)
 			.TabRole(ETabRole::PanelTab)
 			//.Label(LOCTEXT("TabTitle", "游戏中GAS查看器"))
-			.Label(LOCTEXT("TabTitle", "In Game GA Viewer"))
+			.Label(LOCTEXT("TabTitle", "Runtime Debug"))
 			[
 				SNew(SBorder)
 #if WITH_EDITOR
@@ -516,7 +516,7 @@ void SGASAttachEditor::RegisterTabSpawner(FTabManager& TabManager)
 
 	TabManager.RegisterTabSpawner(SGASAttachEditor::GetTabName(), FOnSpawnTab::CreateStatic(SpawnCallStackViewTab))
 		//.SetDisplayName(LOCTEXT("TabTitle", "游戏中GAS查看器"));
-		.SetDisplayName(LOCTEXT("TabTitle", "In Game GA Viewer"));
+		.SetDisplayName(LOCTEXT("TabTitle", "Runtime Debug"));
 }
 
 void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
@@ -549,7 +549,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 					SNew(SButton)
 					.HAlign(HAlign_Left)
 					//.Text(LOCTEXT("Refresh", "刷新查看"))
-					.Text(LOCTEXT("Refresh", "Update GA"))
+					.Text(LOCTEXT("Refresh", "Update"))
 					.OnClicked(this, &SGASAttachEditorImpl::UpdateGameplayCueListItemsButtom)
 				]
 				
@@ -957,7 +957,7 @@ void SGASAttachEditorImpl::SetPickingMode(bool bTick)
 FText SGASAttachEditorImpl::HandleGetPickingModeText() const
 {
 	//return bPickingTick ? LOCTEXT("bPickingTickYes", "按 END 键停止刷新") : LOCTEXT("bPickingTickNo", "持续更新") ;
-	return bPickingTick ? LOCTEXT("bPickingTickYes", "Key Down 'END' Break ") : LOCTEXT("bPickingTickNo", "Continuous Update") ;
+	return bPickingTick ? LOCTEXT("bPickingTickYes", "Press 'END' to interrupt") : LOCTEXT("bPickingTickNo", "Continuous Update") ;
 }
 
 FReply SGASAttachEditorImpl::OnExpandAllClicked()
@@ -1537,7 +1537,7 @@ FText SGASAttachEditorImpl::HandleGeScreenModeText(EScreenGAModeState InState) c
 		break;
 	case NoActive:
 		//StateText = LOCTEXT("NoActive","未激活");
-		StateText = LOCTEXT("NoActive","NoActive");
+		StateText = LOCTEXT("NoActive","Inactive");
 		break;
 	default:
 		break;
@@ -1631,27 +1631,27 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityToolWidget()
 					.SortMode(this,&SGASAttachEditorImpl::GetColumnSortMode, NAME_AbilitietName)
 					.OnSort(this, &SGASAttachEditorImpl::OnColumnSortModeChanged)
 					//.DefaultLabel(LOCTEXT("AbilitietName", "名称"))
-					.DefaultLabel(LOCTEXT("AbilitietName", "AbilitietName"))
+					.DefaultLabel(LOCTEXT("AbilitietName", "Ability Name"))
 					//.DefaultTooltip(LOCTEXT("AbilitietNameToolTip", "技能名称/任务名称/调试名称"))
-					.DefaultTooltip(LOCTEXT("AbilitietNameToolTip", "AbilitietName/TaskName"))
+					.DefaultTooltip(LOCTEXT("AbilitietNameToolTip", "Ability/Task name"))
 					.FillWidth(0.6f)
 					.ShouldGenerateWidget(true)
 
 					+ SHeaderRow::Column(NAME_GAStateType)
 					/*.DefaultLabel(LOCTEXT("GAAbilitietStateType", "当前状态"))
 					.DefaultTooltip(LOCTEXT("GAStateTypeToolTip", "当前状态是否激活，或者是可以被激活但是因为某些原因被拦截"))*/
-					.DefaultLabel(LOCTEXT("GAAbilitietStateType", "AbilitietStateType"))
-					.DefaultTooltip(LOCTEXT("GAStateTypeToolTip", "Whether the current state is activated or can be activated but blocked for some reason"))
+					.DefaultLabel(LOCTEXT("GAAbilitietStateType", "State"))
+					.DefaultTooltip(LOCTEXT("GAStateTypeToolTip", "Whether the ability is active, inactive or blocked"))
 					.FillWidth(0.2f)
 
 					+ SHeaderRow::Column(NAME_GAIsActive)
 					//.DefaultLabel(LOCTEXT("GAIsActive", "是否激活"))
-					.DefaultLabel(LOCTEXT("GAIsActive", "IsActive"))
+					.DefaultLabel(LOCTEXT("GAIsActive", "Active"))
 					.FixedWidth(60.f)
 
 					+ SHeaderRow::Column(NAME_GAAbilityTriggers)
 					//.DefaultLabel(LOCTEXT("GAAbilityTriggers", "存在的激活Tag"))
-					.DefaultLabel(LOCTEXT("GAAbilityTriggers", "AbilityTriggers"))
+					.DefaultLabel(LOCTEXT("GAAbilityTriggers", "Triggers"))
 					.HAlignHeader(EHorizontalAlignment::HAlign_Center)
 					.FillWidth(0.2)
 				)

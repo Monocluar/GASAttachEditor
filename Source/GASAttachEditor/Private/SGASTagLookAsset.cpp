@@ -94,7 +94,7 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 				[
 					SNew(STextBlock)
 					//.Text(LOCTEXT("AbilityTriggersEvent", "调用GA事件的Tags"))
-					.Text(LOCTEXT("AbilityTriggersEvent", "Tags Calling GA Event"))
+					.Text(LOCTEXT("AbilityTriggersEvent", "Ability Trigger Events"))
 				]
 				+ SVerticalBox::Slot()
 				.FillHeight(1.f)
@@ -132,18 +132,18 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 
 						+ SHeaderRow::Column(NAME_TagName)
 						//.DefaultLabel(LOCTEXT("TagName", "标签名称"))
-						.DefaultLabel(LOCTEXT("TagName", "TagName"))
+						.DefaultLabel(LOCTEXT("TagName", "Tag Name"))
 						.FillWidth(0.3f)
 						.ShouldGenerateWidget(true)
 
 						+ SHeaderRow::Column(NAME_AbilitieAsset)
 						//.DefaultLabel(LOCTEXT("AbilitieAsset", "资源"))
-						.DefaultLabel(LOCTEXT("AbilitieAsset", "AbilitieAsset"))
+						.DefaultLabel(LOCTEXT("AbilitieAsset", "Ability Asset"))
 						.FillWidth(0.5f)
 
 						+ SHeaderRow::Column(NAME_TriggerSource)
 						//.DefaultLabel(LOCTEXT("TriggerSource", "响应类型"))
-						.DefaultLabel(LOCTEXT("TriggerSource", "TriggerSource"))
+						.DefaultLabel(LOCTEXT("TriggerSource", "Trigger Source"))
 						.FillWidth(0.2f)
 					)
 				]
@@ -367,7 +367,7 @@ void SGASTagLookAsset::RegisterTabSpawner(FTabManager& TabManager)
 		return SNew(SDockTab)
 			.TabRole(ETabRole::PanelTab)
 			//.Label(LOCTEXT("TabTitle", "Tag调用GA查询器"))
-			.Label(LOCTEXT("TabTitle", "Tag Calls GA Query"))
+			.Label(LOCTEXT("TabTitle", "Events Debug"))
 			[
 				SNew(SBorder)
 				.BorderImage(FAppStyle::GetBrush("Docking.Tab.ContentAreaBrush"))
@@ -380,7 +380,7 @@ void SGASTagLookAsset::RegisterTabSpawner(FTabManager& TabManager)
 
 	TabManager.RegisterTabSpawner(SGASTagLookAsset::GetTabName(), FOnSpawnTab::CreateStatic(SpawnCallStackViewTab))
 		//.SetDisplayName(LOCTEXT("TabTitle", "Tag调用GA查询器"));
-		.SetDisplayName(LOCTEXT("TabTitle", "Tag Calls GA Query"));
+		.SetDisplayName(LOCTEXT("TabTitle", "Events Debug"));
 }
 #endif
 #undef LOCTEXT_NAMESPACE

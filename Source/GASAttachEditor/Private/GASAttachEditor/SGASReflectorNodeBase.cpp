@@ -307,7 +307,7 @@ FText FGASAbilitieNode::GetGAStateType()
 	else if (AbilitySpecPtr.Ability->CanActivateAbility(AbilitySpecPtr.Handle, ASComponent->AbilityActorInfo.Get(), nullptr, nullptr, &FailureTags) == false)
 	{
 		//CN: OutType = LOCTEXT("CantActivate","被阻止激活");
-		OutType = LOCTEXT("CantActivate","Cant Activate");
+		OutType = LOCTEXT("CantActivate","Blocked");
 		float Cooldown =  AbilitySpecPtr.Ability->GetCooldownTimeRemaining(ASComponent->AbilityActorInfo.Get());
 		if (Cooldown > 0.f)
 		{
