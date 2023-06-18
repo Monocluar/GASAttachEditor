@@ -44,8 +44,8 @@ void FGASAttachEditorModule::StartupModule()
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(GASAttachEditorTabName, FOnSpawnTab::CreateRaw(this, &FGASAttachEditorModule::OnSpawnPluginTab))
 		/*.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "查看角色携带GA"))
 		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "打开“查看角色携带GA”选项卡"))*/
-		.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "View GA Carried By Role"))
-		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "Open 'View GA Carried By Role' Tab"))
+		.SetDisplayName(LOCTEXT("FGASAttachEditorTabTitle", "Debug Gameplay Ability System"))
+		.SetTooltipText(LOCTEXT("FGASAttachEditorTooltipText", "Open the Debug Gameplay Ability System tab"))
 #if WITH_EDITOR
 		.SetGroup(MenuStructure.GetDeveloperToolsDebugCategory())
 #endif
