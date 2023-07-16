@@ -33,7 +33,7 @@ enum EScreenGAModeState
 };
 
 
-static FName NAME_AbilitietName(TEXT("AbilitietName"));
+static FName NAME_AbilitietName(TEXT("AbilitiesName"));
 static FName NAME_GAStateType(TEXT("GAStateType"));
 static FName NAME_GAIsActive(TEXT("GAIsActive"));
 static FName NAME_GAAbilityTriggers(TEXT("AbilityTriggers"));
