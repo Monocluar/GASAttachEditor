@@ -28,6 +28,8 @@
 #include "Framework/Commands/UIAction.h"
 #include "HAL/ExceptionHandling.h"
 #include "Widgets/Input/SButton.h"
+#include "UObject/UObjectIterator.h"
+#include "GameFramework/Pawn.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 

@@ -3,6 +3,7 @@
 #include "AttributeSet.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
+#include "Engine/World.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 
