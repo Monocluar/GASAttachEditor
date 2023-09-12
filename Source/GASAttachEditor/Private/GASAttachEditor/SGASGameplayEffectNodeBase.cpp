@@ -57,15 +57,15 @@ FText FGASGameplayEffectNode::GetStackText() const
 {
 	FText StackText;
 
-	if (World && GameplayEffect.Spec.StackCount > 1)
+	if (World && GameplayEffect.Spec.GetStackCount() > 1)
 	{
 		if (GameplayEffect.Spec.Def->StackingType == EGameplayEffectStackingType::AggregateBySource)
 		{
-			StackText =  FText::Format(LOCTEXT("GameplayEffectStacksForm", "Stacks: {0},From: {1}"), GameplayEffect.Spec.StackCount, FText::FromString(GetNameSafe(GameplayEffect.Spec.GetContext().GetInstigatorAbilitySystemComponent()->GetAvatarActor_Direct())));
+			StackText =  FText::Format(LOCTEXT("GameplayEffectStacksForm", "Stacks: {0},From: {1}"), GameplayEffect.Spec.GetStackCount(), FText::FromString(GetNameSafe(GameplayEffect.Spec.GetContext().GetInstigatorAbilitySystemComponent()->GetAvatarActor_Direct())));
 		}
 		else
 		{
-			StackText =  FText::Format(LOCTEXT("GameplayEffectStacks", "Stacks: {0}"), GameplayEffect.Spec.StackCount);
+			StackText =  FText::Format(LOCTEXT("GameplayEffectStacks", "Stacks: {0}"), GameplayEffect.Spec.GetStackCount());
 		}
 	}
 
