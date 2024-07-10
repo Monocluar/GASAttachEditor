@@ -145,7 +145,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 
 		if (InSelectComponent == ASC.Get() && !bIsSelect)
 		{
-			SelectActorName = ASC->GetAvatarActor_Direct()->GetFName();
+			SelectActorName = GetGASActor(ASC)->GetFName();
 			Info->LastDebugTarget = ASC;
 			bIsSelect = true;
 			break;
@@ -168,7 +168,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 			if (PlayerComp.IsValidIndex(0))
 			{
 				Info->LastDebugTarget = PlayerComp[0];
-				SelectActorName = Info->LastDebugTarget->GetAvatarActor_Direct()->GetFName();
+				SelectActorName = GetGASActor(Info->LastDebugTarget)->GetFName();
 			}
 			else
 			{
@@ -182,7 +182,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 			{
 				if (!ASC.IsValid()) continue;
 
-				if (ASC->GetAvatarActor_Direct()->GetFName() == SelectActorName)
+				if (GetGASActor(ASC)->GetFName() == SelectActorName)
 				{
 					Info->LastDebugTarget = ASC;
 					bIsSelectActorName = true;
@@ -196,7 +196,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 				if (PlayerComp.IsValidIndex(0) && PlayerComp[0] != nullptr)
 				{
 					Info->LastDebugTarget = PlayerComp[0];
-					SelectActorName = PlayerComp[0]->GetAvatarActor_Direct()->GetFName();
+					SelectActorName = GetGASActor(PlayerComp[0])->GetFName();
 				}
 				else
 				{
