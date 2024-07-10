@@ -101,6 +101,27 @@ void UpDataPlayerComp(UWorld* World)
 	}
 }
 
+AActor* GetGASActor(const TWeakObjectPtr<UAbilitySystemComponent>& InASC)
+{
+	if (!InASC.IsValid())
+	{
+		return nullptr;
+	}
+
+	;
+	if (AActor* LocalAvatarActor = InASC->GetAvatarActor_Direct())
+	{
+		return LocalAvatarActor;
+	}
+
+ 	if (AActor* LocalOwnerActor = InASC->GetOwnerActor())
+	{
+		return LocalOwnerActor;
+	}
+
+	return nullptr;
+}
+
 UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilitySystemComponent* InSelectComponent, FName& SelectActorName)
 {
 	// Return target if we already have one
