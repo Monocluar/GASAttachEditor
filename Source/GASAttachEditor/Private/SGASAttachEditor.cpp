@@ -932,13 +932,9 @@ FText SGASAttachEditorImpl::GetOverrideTypeDropDownText() const
 {
 	if (SelectAbilitySystemComponent.IsValid())
 	{
-		if (AActor* LocalAvatarActor = SelectAbilitySystemComponent->GetAvatarActor_Direct())
+		if (AActor* LocalGASActor = GetGASActor(SelectAbilitySystemComponent))
 		{
-			return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(LocalAvatarActor->GetName()), GetLocalRoleText(LocalAvatarActor->GetLocalRole()));
-		}
-		else if (AActor* LocalOwnerActor = SelectAbilitySystemComponent->GetOwnerActor())
-		{
-			return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(LocalOwnerActor->GetName()), GetLocalRoleText(LocalOwnerActor->GetLocalRole()));
+			return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(LocalGASActor->GetName()), GetLocalRoleText(LocalGASActor->GetLocalRole()));
 		}
 	}
 
