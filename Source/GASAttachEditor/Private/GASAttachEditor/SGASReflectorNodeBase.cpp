@@ -387,7 +387,7 @@ bool FGASAbilitieNode::HasValidWidgetAssetData() const
 
 FString FGASAbilitieNode::GetWidgetAssetData() const
 {
-	if (GAAbilitieNode != Node_Abilitie)
+	if (!ASComponent.IsValid() || GAAbilitieNode != Node_Abilitie)
 	{
 		return FString();
 	}
