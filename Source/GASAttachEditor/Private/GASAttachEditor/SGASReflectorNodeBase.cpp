@@ -300,7 +300,7 @@ FText FGASAbilitieNode::GetGAStateType()
 		Tint = FLinearColor::Red;
 		ScreenGAMode = Blocked;
 	}
-	else if (ASComponent->AreAbilityTagsBlocked(AbilitySpecPtr.Ability->AbilityTags))
+	else if (ASComponent->AreAbilityTagsBlocked(AbilitySpecPtr.Ability->GetAssetTags()))
 	{
 		FGameplayTagContainer BlockedAbility;
 		ASComponent->GetBlockedAbilityTags(BlockedAbility);
