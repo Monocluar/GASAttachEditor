@@ -123,7 +123,6 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 				.Padding(0.f)
 				[
 					SAssignNew(LookGAAssetTree,SLookAssetTree)
-					.ItemHeight(32.f)
 					.TreeItemsSource(&LookGAAssetTreeRoot)
 					.OnGenerateRow(this, &SGASTagLookAssetImpl::HandleAttributesWidgetForFilterListView)
 					.OnGetChildren(this, &SGASTagLookAssetImpl::HandleAttributesTreeGetChildren)
