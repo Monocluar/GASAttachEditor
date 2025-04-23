@@ -4,6 +4,8 @@
 #if WITH_EDITOR
 #include "EditorFontGlyphs.h"
 #include "EditorStyleSet.h"
+#include "Editor/EditorEngine.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #endif
 #include "GameplayTagsManager.h"
 #include "Widgets/Input/SHyperlink.h"
@@ -11,6 +13,10 @@
 #include "Widgets/Layout/SBox.h"
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
+
+#if WITH_EDITOR
+extern UNREALED_API UEditorEngine* GEditor;
+#endif
 
 FGASLookAsset::~FGASLookAsset()
 {
