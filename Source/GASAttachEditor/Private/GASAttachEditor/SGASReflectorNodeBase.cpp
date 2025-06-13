@@ -5,13 +5,18 @@
 #include "GameplayTagContainer.h"
 
 #if WITH_EDITOR
-#include "Editor/EditorEngine.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Editor/EditorEngine.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #endif
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Views/STableViewBase.h"
+
+#if WITH_EDITOR
+extern UNREALED_API UEditorEngine* GEditor;
+#endif
 
 #define LOCTEXT_NAMESPACE "SGASAttachEditor"
 
@@ -295,7 +300,7 @@ FText FGASAbilitieNode::GetGAStateType()
 		Tint = FLinearColor::Red;
 		ScreenGAMode = Blocked;
 	}
-	else if (ASComponent->AreAbilityTagsBlocked(AbilitySpecPtr.Ability->AbilityTags))
+	else if (ASComponent->AreAbilityTagsBlocked(AbilitySpecPtr.Ability->GetAssetTags()))
 	{
 		FGameplayTagContainer BlockedAbility;
 		ASComponent->GetBlockedAbilityTags(BlockedAbility);
@@ -387,7 +392,7 @@ bool FGASAbilitieNode::HasValidWidgetAssetData() const
 
 FString FGASAbilitieNode::GetWidgetAssetData() const
 {
-	if (GAAbilitieNode != Node_Abilitie)
+	if (!ASComponent.IsValid() || GAAbilitieNode != Node_Abilitie)
 	{
 		return FString();
 	}
