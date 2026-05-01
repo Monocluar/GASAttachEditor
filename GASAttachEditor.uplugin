@@ -10,14 +10,13 @@
 	"DocsURL": "",
 	"MarketplaceURL": "",
 	"SupportURL": "",
-	"EngineVersion": "5.5.0",
-	"EnabledByDefault": false,
+	"EnabledByDefault": true,
 	"CanContainContent": false,
 	"Installed": false,
 	"Modules": [
 		{
 			"Name": "GASAttachEditor",
-			"Type": "DeveloperTool",
+			"Type": "Editor",
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"GameplayAbilities"
