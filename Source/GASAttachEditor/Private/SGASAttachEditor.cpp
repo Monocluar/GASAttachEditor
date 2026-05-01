@@ -237,12 +237,18 @@ protected:
 	// Select the world scene
 	void HandleShowWorldTypeChange(FWorldContext InWorldContext);
 
+	// Snapshots world contexts each tick to auto-switch the panel target on PIE start, PIE shutdown, or editor map open; preserves the user's manual choice while no transition has occurred
+	void DetectAndAutoSwitchWorld();
+
 private:
 	// 当期选择的世界场景句柄
 	// Current selected world scene handle
 	FName SelectWorldSceneConetextHandle;
 
 	FText SelectWorldSceneText;
+
+	// Last-tick snapshot of world-context handles, used by DetectAndAutoSwitchWorld to spot newly-appeared / vanished worlds
+	TSet<FName> KnownWorldContextHandles;
 
 protected:
 
@@ -543,9 +549,9 @@ void SGASAttachEditor::RegisterTabSpawner(FTabManager& TabManager)
 void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 {
 	bGASTreeExpand = false;
-	bPickingTick = false;
+	bPickingTick = true;
 	SelectAbilitySystemComponentForActorName = FName();
-	SelectAbilitieCategories = Ability;
+	SelectAbilitieCategories = Tags;
 
 	ScreenModeState = EScreenGAModeState::Active | EScreenGAModeState::Blocked | EScreenGAModeState::NoActive;
 
@@ -668,9 +674,10 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 
 		];
 
-	HandleShowDebugAbilitieCategories(Ability);
+	HandleShowDebugAbilitieCategories(Tags);
 
 	UpdateGameplayCueListItemsButtom();
+	DetectAndAutoSwitchWorld();
 	InputPtr = MakeShareable(new FAttachInputProcessor(this));
 	FSlateApplication::Get().RegisterInputPreProcessor(InputPtr);
 
@@ -688,6 +695,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 
 void SGASAttachEditorImpl::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
+	DetectAndAutoSwitchWorld();
 	if (bPickingTick)
 	{
 		UpdateGameplayCueListItems();
@@ -770,6 +778,76 @@ void SGASAttachEditorImpl::HandleShowWorldTypeChange(FWorldContext InWorldContex
 	}
 
 	UpdateGameplayCueListItemsButtom();
+}
+
+void SGASAttachEditorImpl::DetectAndAutoSwitchWorld()
+{
+	auto Priority = [](EWorldType::Type InType) -> int32
+	{
+		if (InType == EWorldType::Type::PIE) return 3;
+		if (InType == EWorldType::Type::Game) return 2;
+		if (InType == EWorldType::Type::Editor) return 1;
+		return -1;
+	};
+
+	const TIndirectArray<FWorldContext>& WorldList = GEngine->GetWorldContexts();
+	TSet<FName> CurrentHandles;
+	const FWorldContext* NewlyAppeared = nullptr;
+	const FWorldContext* BestAvailable = nullptr;
+	int32 NewlyAppearedPriority = -1;
+	int32 BestAvailablePriority = -1;
+
+	for (const FWorldContext& Item : WorldList)
+	{
+		const int32 P = Priority(Item.WorldType);
+		if (P < 0)
+		{
+			continue;
+		}
+
+		CurrentHandles.Add(Item.ContextHandle);
+
+		if (!KnownWorldContextHandles.Contains(Item.ContextHandle)
+		    && P > NewlyAppearedPriority)
+		{
+			NewlyAppearedPriority = P;
+			NewlyAppeared = &Item;
+		}
+
+		if (P > BestAvailablePriority)
+		{
+			BestAvailablePriority = P;
+			BestAvailable = &Item;
+		}
+	}
+
+	const bool bFirstScan = KnownWorldContextHandles.IsEmpty();
+	KnownWorldContextHandles = MoveTemp(CurrentHandles);
+
+	if (bFirstScan)
+	{
+		// Initial snapshot only; Construct already selected a world via UpdateGameplayCueListItemsButtom
+		return;
+	}
+
+	const FWorldContext* TargetCtx = nullptr;
+	if (NewlyAppeared)
+	{
+		// New world appeared (PIE start, editor map opened): switch to highest-priority newcomer
+		TargetCtx = NewlyAppeared;
+	}
+	else if (!SelectWorldSceneConetextHandle.IsNone()
+	         && !KnownWorldContextHandles.Contains(SelectWorldSceneConetextHandle))
+	{
+		// Selected world disappeared (PIE killed): fall back to the best remaining world
+		TargetCtx = BestAvailable;
+	}
+
+	if (TargetCtx
+	    && TargetCtx->ContextHandle != SelectWorldSceneConetextHandle)
+	{
+		HandleShowWorldTypeChange(*TargetCtx);
+	}
 }
 
 FText SGASAttachEditorImpl::GenerateToolTipForText(TSharedRef<FGASAbilitieNodeBase> InReflectorNode) const
