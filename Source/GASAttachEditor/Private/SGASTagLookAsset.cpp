@@ -1,22 +1,23 @@
 #include "SGASTagLookAsset.h"
 
 #if WITH_EDITOR
-#include "Engine/Blueprint.h"
-#include "Framework/Application/SlateApplication.h"
-#include "Framework/Docking/TabManager.h"
 #include "GameplayTagContainer.h"
-#include "Layout/WidgetPath.h"
 #include "SGameplayTagWidget.h"
-#include "Widgets/Docking/SDockTab.h"
 #endif
 
 #include "Abilities/GameplayAbility.h"
 #include "AssetRegistry/AssetData.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Engine/Blueprint.h"
+#include "Framework/Application/MenuStack.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Framework/Docking/TabManager.h"
 #include "Layout/Children.h"
+#include "Layout/WidgetPath.h"
 #include "TagLookAsset/SGASLookAssetBase.h"
 #include "Templates/SharedPointer.h"
 #include "UObject/UObjectGlobals.h"
+#include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SWrapBox.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Views/STreeView.h"
@@ -123,6 +124,7 @@ void SGASTagLookAssetImpl::Construct(const FArguments& InArgs)
 				.Padding(0.f)
 				[
 					SAssignNew(LookGAAssetTree,SLookAssetTree)
+					.ItemHeight(32.f)
 					.TreeItemsSource(&LookGAAssetTreeRoot)
 					.OnGenerateRow(this, &SGASTagLookAssetImpl::HandleAttributesWidgetForFilterListView)
 					.OnGetChildren(this, &SGASTagLookAssetImpl::HandleAttributesTreeGetChildren)

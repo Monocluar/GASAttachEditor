@@ -101,25 +101,23 @@ void UpDataPlayerComp(UWorld* World)
 	}
 }
 
-AActor* GetGASActor(const TWeakObjectPtr<UAbilitySystemComponent>& InASC)
+// Returns a stable display FName for an ASC; AbilityActorInfo (Avatar/Owner) is unset in Editor world before InitAbilityActorInfo is called, so falls back to the component's outer actor
+FName GetASCDisplayActorName(const UAbilitySystemComponent* ASC)
 {
-	if (!InASC.IsValid())
+	if (!ASC)
 	{
-		return nullptr;
+		return NAME_None;
 	}
-
-	;
-	if (AActor* LocalAvatarActor = InASC->GetAvatarActor_Direct())
+	const AActor* DisplayActor = ASC->GetAvatarActor_Direct();
+	if (!DisplayActor)
 	{
-		return LocalAvatarActor;
+		DisplayActor = ASC->GetOwnerActor();
 	}
-
- 	if (AActor* LocalOwnerActor = InASC->GetOwnerActor())
+	if (!DisplayActor)
 	{
-		return LocalOwnerActor;
+		DisplayActor = ASC->GetOwner();
 	}
-
-	return nullptr;
+	return DisplayActor ? DisplayActor->GetFName() : ASC->GetFName();
 }
 
 UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilitySystemComponent* InSelectComponent, FName& SelectActorName)
@@ -145,7 +143,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 
 		if (InSelectComponent == ASC.Get() && !bIsSelect)
 		{
-			SelectActorName = GetGASActor(ASC)->GetFName();
+			SelectActorName = GetASCDisplayActorName(ASC.Get());
 			Info->LastDebugTarget = ASC;
 			bIsSelect = true;
 			break;
@@ -168,7 +166,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 			if (PlayerComp.IsValidIndex(0))
 			{
 				Info->LastDebugTarget = PlayerComp[0];
-				SelectActorName = GetGASActor(Info->LastDebugTarget)->GetFName();
+				SelectActorName = GetASCDisplayActorName(Info->LastDebugTarget.Get());
 			}
 			else
 			{
@@ -182,7 +180,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 			{
 				if (!ASC.IsValid()) continue;
 
-				if (GetGASActor(ASC)->GetFName() == SelectActorName)
+				if (GetASCDisplayActorName(ASC.Get()) == SelectActorName)
 				{
 					Info->LastDebugTarget = ASC;
 					bIsSelectActorName = true;
@@ -196,7 +194,7 @@ UAbilitySystemComponent* GetDebugTarget(FASCDebugTargetInfo* Info, const UAbilit
 				if (PlayerComp.IsValidIndex(0) && PlayerComp[0] != nullptr)
 				{
 					Info->LastDebugTarget = PlayerComp[0];
-					SelectActorName = GetGASActor(PlayerComp[0])->GetFName();
+					SelectActorName = GetASCDisplayActorName(PlayerComp[0].Get());
 				}
 				else
 				{
@@ -239,12 +237,18 @@ protected:
 	// Select the world scene
 	void HandleShowWorldTypeChange(FWorldContext InWorldContext);
 
+	// Snapshots world contexts each tick to auto-switch the panel target on PIE start, PIE shutdown, or editor map open; preserves the user's manual choice while no transition has occurred
+	void DetectAndAutoSwitchWorld();
+
 private:
 	// 当期选择的世界场景句柄
 	// Current selected world scene handle
 	FName SelectWorldSceneConetextHandle;
 
 	FText SelectWorldSceneText;
+
+	// Last-tick snapshot of world-context handles, used by DetectAndAutoSwitchWorld to spot newly-appeared / vanished worlds
+	TSet<FName> KnownWorldContextHandles;
 
 protected:
 
@@ -545,9 +549,9 @@ void SGASAttachEditor::RegisterTabSpawner(FTabManager& TabManager)
 void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 {
 	bGASTreeExpand = false;
-	bPickingTick = false;
+	bPickingTick = true;
 	SelectAbilitySystemComponentForActorName = FName();
-	SelectAbilitieCategories = Ability;
+	SelectAbilitieCategories = Tags;
 
 	ScreenModeState = EScreenGAModeState::Active | EScreenGAModeState::Blocked | EScreenGAModeState::NoActive;
 
@@ -670,9 +674,10 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 
 		];
 
-	HandleShowDebugAbilitieCategories(Ability);
+	HandleShowDebugAbilitieCategories(Tags);
 
 	UpdateGameplayCueListItemsButtom();
+	DetectAndAutoSwitchWorld();
 	InputPtr = MakeShareable(new FAttachInputProcessor(this));
 	FSlateApplication::Get().RegisterInputPreProcessor(InputPtr);
 
@@ -690,6 +695,7 @@ void SGASAttachEditorImpl::Construct(const FArguments& InArgs)
 
 void SGASAttachEditorImpl::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
+	DetectAndAutoSwitchWorld();
 	if (bPickingTick)
 	{
 		UpdateGameplayCueListItems();
@@ -711,12 +717,16 @@ TSharedRef<SWidget> SGASAttachEditorImpl::OnGetShowWorldTypeMenu()
 
 	for (auto& Item : WorldList)
 	{
-		if (Item.WorldType == EWorldType::Type::PIE || Item.WorldType == EWorldType::Type::Game)
+		if (Item.WorldType == EWorldType::Type::PIE || Item.WorldType == EWorldType::Type::Game || Item.WorldType == EWorldType::Type::Editor)
 		{
 			FUIAction NoAction( FExecuteAction::CreateSP( this, &SGASAttachEditorImpl::HandleShowWorldTypeChange, Item ) );
 
 			FText ShowName;
-			if (Item.RunAsDedicated)
+			if (Item.WorldType == EWorldType::Type::Editor)
+			{
+				ShowName = LOCTEXT("Editor", "Editor");
+			}
+			else if (Item.RunAsDedicated)
 			{
 				//ShowName = LOCTEXT("Dedicated","专用服务器");
 				ShowName = LOCTEXT("Dedicated","Dedicated");
@@ -747,7 +757,11 @@ void SGASAttachEditorImpl::HandleShowWorldTypeChange(FWorldContext InWorldContex
 	SelectWorldSceneConetextHandle = InWorldContext.ContextHandle;
 
 
-	if (InWorldContext.RunAsDedicated)
+	if (InWorldContext.WorldType == EWorldType::Type::Editor)
+	{
+		SelectWorldSceneText = LOCTEXT("Editor", "Editor");
+	}
+	else if (InWorldContext.RunAsDedicated)
 	{
 		SelectWorldSceneText = LOCTEXT("Dedicated", "专用服务器");
 	}
@@ -764,6 +778,76 @@ void SGASAttachEditorImpl::HandleShowWorldTypeChange(FWorldContext InWorldContex
 	}
 
 	UpdateGameplayCueListItemsButtom();
+}
+
+void SGASAttachEditorImpl::DetectAndAutoSwitchWorld()
+{
+	auto Priority = [](EWorldType::Type InType) -> int32
+	{
+		if (InType == EWorldType::Type::PIE) return 3;
+		if (InType == EWorldType::Type::Game) return 2;
+		if (InType == EWorldType::Type::Editor) return 1;
+		return -1;
+	};
+
+	const TIndirectArray<FWorldContext>& WorldList = GEngine->GetWorldContexts();
+	TSet<FName> CurrentHandles;
+	const FWorldContext* NewlyAppeared = nullptr;
+	const FWorldContext* BestAvailable = nullptr;
+	int32 NewlyAppearedPriority = -1;
+	int32 BestAvailablePriority = -1;
+
+	for (const FWorldContext& Item : WorldList)
+	{
+		const int32 P = Priority(Item.WorldType);
+		if (P < 0)
+		{
+			continue;
+		}
+
+		CurrentHandles.Add(Item.ContextHandle);
+
+		if (!KnownWorldContextHandles.Contains(Item.ContextHandle)
+		    && P > NewlyAppearedPriority)
+		{
+			NewlyAppearedPriority = P;
+			NewlyAppeared = &Item;
+		}
+
+		if (P > BestAvailablePriority)
+		{
+			BestAvailablePriority = P;
+			BestAvailable = &Item;
+		}
+	}
+
+	const bool bFirstScan = KnownWorldContextHandles.IsEmpty();
+	KnownWorldContextHandles = MoveTemp(CurrentHandles);
+
+	if (bFirstScan)
+	{
+		// Initial snapshot only; Construct already selected a world via UpdateGameplayCueListItemsButtom
+		return;
+	}
+
+	const FWorldContext* TargetCtx = nullptr;
+	if (NewlyAppeared)
+	{
+		// New world appeared (PIE start, editor map opened): switch to highest-priority newcomer
+		TargetCtx = NewlyAppeared;
+	}
+	else if (!SelectWorldSceneConetextHandle.IsNone()
+	         && !KnownWorldContextHandles.Contains(SelectWorldSceneConetextHandle))
+	{
+		// Selected world disappeared (PIE killed): fall back to the best remaining world
+		TargetCtx = BestAvailable;
+	}
+
+	if (TargetCtx
+	    && TargetCtx->ContextHandle != SelectWorldSceneConetextHandle)
+	{
+		HandleShowWorldTypeChange(*TargetCtx);
+	}
 }
 
 FText SGASAttachEditorImpl::GenerateToolTipForText(TSharedRef<FGASAbilitieNodeBase> InReflectorNode) const
@@ -901,6 +985,11 @@ FText GetOverrideTypeDropDownText_Explicit(const TWeakObjectPtr<UAbilitySystemCo
 
 	AActor* LocalAvatarActor = InComp->GetAvatarActor_Direct();
 	AActor* LocalOwnerActor = InComp->GetOwnerActor();
+	if (!LocalAvatarActor && !LocalOwnerActor)
+	{
+		// AbilityActorInfo not initialized (Editor world preview), fall back to the component's outer actor so name/role formatting stays safe
+		LocalOwnerActor = InComp->GetOwner();
+	}
 	APawn* AvatarAsPawn = LocalAvatarActor ? Cast<APawn>(LocalAvatarActor) : nullptr;
 	APawn* OwnerAsPawn = LocalOwnerActor ? Cast<APawn>(LocalOwnerActor) : nullptr;
 
@@ -932,9 +1021,18 @@ FText SGASAttachEditorImpl::GetOverrideTypeDropDownText() const
 {
 	if (SelectAbilitySystemComponent.IsValid())
 	{
-		if (AActor* LocalGASActor = GetGASActor(SelectAbilitySystemComponent))
+		if (AActor* LocalAvatarActor = SelectAbilitySystemComponent->GetAvatarActor_Direct())
 		{
-			return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(LocalGASActor->GetName()), GetLocalRoleText(LocalGASActor->GetLocalRole()));
+			return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(LocalAvatarActor->GetName()), GetLocalRoleText(LocalAvatarActor->GetLocalRole()));
+		}
+		else if (AActor* LocalOwnerActor = SelectAbilitySystemComponent->GetOwnerActor())
+		{
+			return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(LocalOwnerActor->GetName()), GetLocalRoleText(LocalOwnerActor->GetLocalRole()));
+		}
+		else if (AActor* LocalOuterActor = SelectAbilitySystemComponent->GetOwner())
+		{
+			// AbilityActorInfo not initialized (Editor world preview), fall back to the component's outer actor
+			return FText::Format(FText::FromString(TEXT("{0}[{1}]")), FText::FromString(LocalOuterActor->GetName()), GetLocalRoleText(LocalOuterActor->GetLocalRole()));
 		}
 	}
 
@@ -1296,7 +1394,7 @@ UWorld* SGASAttachEditorImpl::GetWorld()
 
 	for (auto& Item : WorldList)
 	{
-		if (Item.WorldType == EWorldType::Type::PIE || Item.WorldType == EWorldType::Type::Game)
+		if (Item.WorldType == EWorldType::Type::PIE || Item.WorldType == EWorldType::Type::Game || Item.WorldType == EWorldType::Type::Editor)
 		{
 			NewWorldList.Add(Item);
 			if (Item.ContextHandle == SelectWorldSceneConetextHandle)
@@ -1310,7 +1408,11 @@ UWorld* SGASAttachEditorImpl::GetWorld()
 	{
 		SelectWorldSceneConetextHandle = NewWorldList[0].ContextHandle;
 
-		if (NewWorldList[0].RunAsDedicated)
+		if (NewWorldList[0].WorldType == EWorldType::Type::Editor)
+		{
+			SelectWorldSceneText = LOCTEXT("Editor", "Editor");
+		}
+		else if (NewWorldList[0].RunAsDedicated)
 		{
 			//SelectWorldSceneText = LOCTEXT("Dedicated", "专用服务器");
 			SelectWorldSceneText = LOCTEXT("Dedicated", "Dedicated");
@@ -1632,6 +1734,7 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAbilityToolWidget()
 			.Padding(0)
 			[
 				SAssignNew(AbilitieReflectorTree, SAbilitieTree)
+				.ItemHeight(24.f)
 				.TreeItemsSource(&AbilitieFilteredTreeRoot)
 				.OnGenerateRow(this, &SGASAttachEditorImpl::OnGenerateWidgetForFilterListView)
 				.OnGetChildren(this, &SGASAttachEditorImpl::HandleReflectorTreeGetChildren)
@@ -1686,6 +1789,7 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateAttributesToolWidget()
 			.Padding(0)
 			[
 				SAssignNew(AttributesReflectorTree,SAttributesTree)
+				.ItemHeight(32.f)
 				.TreeItemsSource(&AttributesFilteredTreeRoot) 
 				.OnGenerateRow(this, &SGASAttachEditorImpl::HandleAttributesWidgetForFilterListView)
 				.OnGetChildren(this, &SGASAttachEditorImpl::HandleAttributesTreeGetChildren)
@@ -1753,6 +1857,7 @@ TSharedPtr<SWidget> SGASAttachEditorImpl::CreateGameplayEffectToolWidget()
 			.Padding(0.f)
 			[
 				SAssignNew(GameplayEffectTree, SGameplayEffectTree)
+				.ItemHeight(24.f)
 				.TreeItemsSource(&GameplayEffectTreeRoot)
 				.OnGenerateRow(this, &SGASAttachEditorImpl::OneGameplayEffecGenerateWidgetForFilterListView)
 				.OnGetChildren(this, &SGASAttachEditorImpl::HandleGameplayEffectTreeGetChildren)
